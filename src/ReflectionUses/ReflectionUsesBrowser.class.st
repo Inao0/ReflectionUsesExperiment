@@ -47,7 +47,7 @@ ReflectionUsesBrowser >> codePresenterLabelName [
 
 { #category : #initialization }
 ReflectionUsesBrowser >> connectPresenters [
-
+	browseButtonPresenter action: [ self currentMethod browse ].
 	justifyButtons do: [ :radioButton | 
 		radioButton whenChangedDo: [ 
 			currentResult justified: self currentJustifyAnswer ] ].
@@ -108,10 +108,10 @@ ReflectionUsesBrowser >> defaultLayout [
 		  yourself
 ]
 
-{ #category : #accessing }
+{ #category : #initialization }
 ReflectionUsesBrowser >> initialize [
-	super initialize.
 	reflectionUsesModel := ReflectionUsesModel new.
+	super initialize.
 	
 ]
 
