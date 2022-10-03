@@ -45,6 +45,31 @@ ReflectionUsesBrowser >> codePresenterLabelName [
 	^ self currentMethod methodClass name, '>>', self currentSelector, ' in {', self currentMethod class package name, ']'.
 ]
 
+{ #category : #initialization }
+ReflectionUsesBrowser >> connectPresenters [
+
+	justifyButtons do: [ :radioButton | 
+		radioButton whenChangedDo: [ 
+			currentResult justified: self currentJustifyAnswer ] ].
+	fixButtons do: [ :radioButton | 
+		radioButton whenChangedDo: [ 
+			currentResult removability: self currentRemovabilityAnswer ] ].
+	commentPresenter whenSubmitDo: [ :arg | currentResult comment: arg ].
+	indirectUseCheckBox whenChangedDo: [ 
+		currentResult indirectUse: indirectUseCheckBox state ].
+
+	nextButton action: [ 
+		currentResult comment: commentPresenter text.
+		reflectionUsesModel saveResult: currentResult.
+		reflectionUsesModel next.
+		self updateForNewMethod ].
+	backButton action: [ 
+		currentResult comment: commentPresenter text.
+		reflectionUsesModel saveResult: currentResult.
+		reflectionUsesModel previous.
+		self updateForNewMethod ]
+]
+
 { #category : #querying }
 ReflectionUsesBrowser >> currentJustifyAnswer [
 	dontKnowJustifyButton state ifTrue: [ ^ 'unknown' ].
@@ -81,6 +106,13 @@ ReflectionUsesBrowser >> defaultLayout [
 				   add: codePresenter );
 		  add: self rightPanelLayout;
 		  yourself
+]
+
+{ #category : #accessing }
+ReflectionUsesBrowser >> initialize [
+	super initialize.
+	reflectionUsesModel := ReflectionUsesModel new.
+	
 ]
 
 { #category : #initialization }

@@ -29,6 +29,13 @@ CollectionBidirectionalIterator >> collection: anObject [
 	collection := anObject
 ]
 
+{ #category : #initialization }
+CollectionBidirectionalIterator >> initialize [ 
+	super initialize.
+	index := 0.
+	
+]
+
 { #category : #accessing }
 CollectionBidirectionalIterator >> next [
 

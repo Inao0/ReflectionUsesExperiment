@@ -11,6 +11,17 @@ Class {
 	#category : #ReflectionUses
 }
 
+{ #category : #navigating }
+ReflectionUsesModel >> backwardCurrentSelector: aSelector [
+
+	currentSelector := aSelector.
+	listOfSenders := (CollectionBidirectionalIterator on:
+		                 (currentSelector
+			                  ifNotNil: [ currentSelector senders ]
+			                  ifNil: [ {  } ])) setToLast .
+	self currentMethod: listOfSenders next
+]
+
 { #category : #accessing }
 ReflectionUsesModel >> currentMethod [
 
@@ -70,6 +81,18 @@ ReflectionUsesModel >> listOfSenders [
 	^ listOfSenders
 ]
 
+{ #category : #navigating }
+ReflectionUsesModel >> next [
+	currentMethod := listOfSenders next.
+	currentMethod ifNil: [ self currentSelector: listOfSelectors next. ]
+]
+
+{ #category : #navigating }
+ReflectionUsesModel >> previous [
+	currentMethod := listOfSenders previous.
+	currentMethod ifNil: [ self backwardCurrentSelector: listOfSelectors previous. ]
+]
+
 { #category : #initialization }
 ReflectionUsesModel >> resetFromListOfSelectors [
 
@@ -92,4 +115,9 @@ ReflectionUsesModel >> resultDictionary [
 ReflectionUsesModel >> resultDictionary: anObject [
 
 	resultDictionary := anObject
+]
+
+{ #category : #saving }
+ReflectionUsesModel >> saveResult: aReflectionUsesResult [ 
+	(resultDictionary at: aReflectionUsesResult targetSelector) at: aReflectionUsesResult targetMethod put: aReflectionUsesResult.
 ]
