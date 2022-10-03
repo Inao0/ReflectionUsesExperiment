@@ -13,13 +13,13 @@ Class {
 
 { #category : #navigating }
 ReflectionUsesModel >> backwardCurrentSelector: aSelector [
-
 	currentSelector := aSelector.
 	listOfSenders := (CollectionBidirectionalIterator on:
 		                 (currentSelector
 			                  ifNotNil: [ currentSelector senders ]
-			                  ifNil: [ {  } ])) setToLast .
-	self currentMethod: listOfSenders next
+			                  ifNil: [ {  } ])) setToEnd .
+	self currentMethod: listOfSenders previous.
+
 ]
 
 { #category : #accessing }
@@ -32,6 +32,11 @@ ReflectionUsesModel >> currentMethod [
 ReflectionUsesModel >> currentMethod: anObject [
 
 	currentMethod := anObject
+]
+
+{ #category : #accessing }
+ReflectionUsesModel >> currentMethodNumber [
+	^ listOfSenders index
 ]
 
 { #category : #accessing }
@@ -56,10 +61,20 @@ ReflectionUsesModel >> currentSelector: aSelector [
 	self currentMethod: listOfSenders next
 ]
 
+{ #category : #accessing }
+ReflectionUsesModel >> currentSelectorNumber [
+	^ listOfSelectors index
+]
+
 { #category : #initialization }
 ReflectionUsesModel >> initialize [ 
 	super initialize.
 	resultDictionary := IdentityDictionary new.
+]
+
+{ #category : #saving }
+ReflectionUsesModel >> isCurrentMethodLastMethod [
+	^ (self currentSelectorNumber = listOfSelectors size) and: (self currentMethodNumber = listOfSenders size)
 ]
 
 { #category : #accessing }
@@ -87,10 +102,20 @@ ReflectionUsesModel >> next [
 	currentMethod ifNil: [ self currentSelector: listOfSelectors next. ]
 ]
 
+{ #category : #accessing }
+ReflectionUsesModel >> numberOfMethods [
+	^ listOfSenders size
+]
+
+{ #category : #accessing }
+ReflectionUsesModel >> numberOfSelectors [
+	^ listOfSelectors size
+]
+
 { #category : #navigating }
 ReflectionUsesModel >> previous [
 	currentMethod := listOfSenders previous.
-	currentMethod ifNil: [ self backwardCurrentSelector: listOfSelectors previous. ]
+	currentMethod ifNil: [ self backwardCurrentSelector: listOfSelectors previous. ].
 ]
 
 { #category : #initialization }

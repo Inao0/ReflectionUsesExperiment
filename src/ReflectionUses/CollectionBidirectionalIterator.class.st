@@ -29,6 +29,11 @@ CollectionBidirectionalIterator >> collection: anObject [
 	collection := anObject
 ]
 
+{ #category : #accessing }
+CollectionBidirectionalIterator >> index [
+	^index
+]
+
 { #category : #initialization }
 CollectionBidirectionalIterator >> initialize [ 
 	super initialize.
@@ -39,14 +44,14 @@ CollectionBidirectionalIterator >> initialize [
 { #category : #accessing }
 CollectionBidirectionalIterator >> next [
 
-	index < collection size  ifTrue: [ index := index + 1 ].
+	index < (collection size + 1) ifTrue: [ index := index + 1 ].
 	^ collection at: index ifAbsent: [ nil ]
 ]
 
 { #category : #accessing }
 CollectionBidirectionalIterator >> previous [
 
-	index > 1 ifTrue: [ index := index - 1 ].
+	index > 0 ifTrue: [ index := index - 1 ].
 	^ collection at: index ifAbsent: [ nil ]
 ]
 
@@ -56,6 +61,12 @@ CollectionBidirectionalIterator >> reset [
 ]
 
 { #category : #initialization }
-CollectionBidirectionalIterator >> setToLast [
-	index := collection size.
+CollectionBidirectionalIterator >> setToEnd [
+	index := collection size + 1.
+]
+
+{ #category : #accessing }
+CollectionBidirectionalIterator >> size [
+
+	^ collection size
 ]

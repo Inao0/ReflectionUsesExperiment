@@ -33,8 +33,8 @@ ReflectionUsesBrowser class >> example [
 
 	"This example opens a spec window with a label."
 	| model |
-	model := (ReflectionUsesModel new listOfSelectors: {#allInstances}).
-	^ ( self new reflectionUsesModel: model; inspect ; asWindow )initialExtent: 1200@600; open.
+	model := (ReflectionUsesModel new listOfSelectors: {#nextInstance . #allInstances}).
+	^ ( self new reflectionUsesModel: model; inspect ; asWindow ) initialExtent: 1200@600; open.
 ]
 
 { #category : #initialization }
@@ -108,6 +108,36 @@ ReflectionUsesBrowser >> defaultLayout [
 		  yourself
 ]
 
+{ #category : #'loading and updating' }
+ReflectionUsesBrowser >> defaultResult [
+
+	^ ReflectionUsesResult new
+		  targetMethod: self currentMethod;
+		  targetSelector: self currentSelector;
+		  justified: 'unknown';
+		  indirectUse: false;
+		  removability: 'unknown';
+		  comment: ''
+]
+
+{ #category : #'loading and updating' }
+ReflectionUsesBrowser >> highlightCurrentSelector [
+
+	| index |
+	self currentSelector ifNotNil: [ 
+		index := codePresenter text
+			         findString: self currentSelector
+			         startingAt: 0.
+		[ index = 0 ] whileFalse: [ 
+			codePresenter addTextSegmentDecoration:
+				(SpTextPresenterDecorator forHighlight
+					 interval: (index to: index + self currentSelector size);
+					 yourself).
+			index := codePresenter text
+				         findString: self currentSelector
+				         startingAt: index + self currentSelector size ] ]
+]
+
 { #category : #initialization }
 ReflectionUsesBrowser >> initialize [
 	reflectionUsesModel := ReflectionUsesModel new.
@@ -161,7 +191,7 @@ ReflectionUsesBrowser >> initializePresenters [
 	commentPresenter := self newText .
 	backButton := SpButtonPresenter new label: 'Back'.
 	nextButton := SpButtonPresenter new label: 'Next'.
-	self updateForNewMethod.
+"	self updateForNewMethod."
 ]
 
 { #category : #accessing }
@@ -208,41 +238,57 @@ ReflectionUsesBrowser >> rightPanelLayout [
 ]
 
 { #category : #'loading and updating' }
+ReflectionUsesBrowser >> selectorLabel [
+
+	^ self currentSelector ifNil: [ '' ] ifNotNil: [ 
+		  reflectionUsesModel currentMethodNumber asString , '/'
+		  , reflectionUsesModel numberOfMethods asString, ' methods for '
+		  , self currentSelector , ' ('
+		  , reflectionUsesModel currentSelectorNumber asString , '/'
+		  , reflectionUsesModel numberOfSelectors asString, ' selectors )' ]
+]
+
+{ #category : #'loading and updating' }
+ReflectionUsesBrowser >> setCloseButton [
+
+	nextButton label: 'Close'.
+	nextButton action: [ 
+		currentResult comment: commentPresenter text.
+		reflectionUsesModel saveResult: currentResult.
+		(UIManager default
+		  confirm:
+		  'Finish the experiment and submit answers ?'
+		  label: 'Proceed?') ifTrue: [ self owner close  ].
+		 ]
+]
+
+{ #category : #'loading and updating' }
+ReflectionUsesBrowser >> setNextButton [
+	
+	nextButton label: 'Next'.
+	nextButton action: [ 
+		currentResult comment: commentPresenter text.
+		reflectionUsesModel saveResult: currentResult.
+		reflectionUsesModel next.
+		self updateForNewMethod ]
+]
+
+{ #category : #'loading and updating' }
 ReflectionUsesBrowser >> updateForNewMethod [
 
-	| index |
 	codePresenterContext label: self codePresenterLabelName.
 	self currentMethod ifNil: [ codePresenter text: '' ] ifNotNil: [ 
 		codePresenter
 			beForMethod: self currentMethod;
 			text: self currentMethod sourceCode ].
-	selectorNamePresenter := self currentSelector
-		                         ifNil: [ '' ]
-		                         ifNotNil: [ 
-		                         'Reflective selector : '
-		                         , self currentSelector ].
+	selectorNamePresenter label: self selectorLabel.
 	currentResult := reflectionUsesModel currentResult.
-	currentResult ifNil: [ 
-		currentResult := ReflectionUsesResult new
-			                 targetMethod: self currentMethod;
-			                 targetSelector: self currentSelector;
-			                 justified: 'unknown';
-			                 indirectUse: false;
-			                 removability: 'unknown';
-			                 comment: '' ].
+	currentResult ifNil: [ currentResult := self defaultResult ].
 	self updatePresenterForCurrentResult.
-	self currentSelector ifNotNil: [ 
-		index := codePresenter text
-			         findString: self currentSelector
-			         startingAt: 0.
-		[ index = 0 ] whileFalse: [ 
-			codePresenter addTextSegmentDecoration:
-				(SpTextPresenterDecorator forHighlight
-					 interval: (index to: index + self currentSelector size);
-					 yourself).
-			index := codePresenter text
-				         findString: self currentSelector
-				         startingAt: index + self currentSelector size ] ]
+	self highlightCurrentSelector.
+	reflectionUsesModel isCurrentMethodLastMethod
+		ifTrue: [ self setCloseButton ]
+		ifFalse: [ self setNextButton ]
 ]
 
 { #category : #'loading and updating' }
