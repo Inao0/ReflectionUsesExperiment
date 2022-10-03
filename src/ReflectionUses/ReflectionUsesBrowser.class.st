@@ -210,6 +210,7 @@ ReflectionUsesBrowser >> rightPanelLayout [
 { #category : #'loading and updating' }
 ReflectionUsesBrowser >> updateForNewMethod [
 
+	| index |
 	codePresenterContext label: self codePresenterLabelName.
 	self currentMethod ifNil: [ codePresenter text: '' ] ifNotNil: [ 
 		codePresenter
@@ -228,8 +229,20 @@ ReflectionUsesBrowser >> updateForNewMethod [
 			                 justified: 'unknown';
 			                 indirectUse: false;
 			                 removability: 'unknown';
-			                 comment: ''].
+			                 comment: '' ].
 	self updatePresenterForCurrentResult.
+	self currentSelector ifNotNil: [ 
+		index := codePresenter text
+			         findString: self currentSelector
+			         startingAt: 0.
+		[ index = 0 ] whileFalse: [ 
+			codePresenter addTextSegmentDecoration:
+				(SpTextPresenterDecorator forHighlight
+					 interval: (index to: index + self currentSelector size);
+					 yourself).
+			index := codePresenter text
+				         findString: self currentSelector
+				         startingAt: index + self currentSelector size ] ]
 ]
 
 { #category : #'loading and updating' }
