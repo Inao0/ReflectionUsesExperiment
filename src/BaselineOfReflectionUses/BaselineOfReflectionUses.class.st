@@ -11,5 +11,6 @@ BaselineOfReflectionUses >> baseline: spec [
 	spec for: #common do: [ 
 		spec
 			package: 'ReflectionUses'
-			with: [ spec repository: 'github://svenvc/NeoCSV/repository' ] ]
+			with: [ spec requires: #('NeoCSV') ] ].
+		spec baseline: 'NeoCSV' with: [ spec repository: 'github://svenvc/NeoCSV/repository' ].
 ]
