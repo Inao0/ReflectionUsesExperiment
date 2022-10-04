@@ -69,22 +69,34 @@ ReflectionUsesModel >> currentSelectorNumber [
 { #category : #navigating }
 ReflectionUsesModel >> export [
 
-	'ReflectionUsesResults.csv' asFileReference writeStreamDo: [ :stream | 
-		| writer |
-		writer := NeoCSVWriter on: stream.
-		writer writeHeader:
-			{ 'Selector'. 'Method'. 'Justify'. 'Removable'. 'IndirectUses'.
-			'Comment' }.
-		listOfSelectors do: [ :sel | 
-			(resultDictionary at: sel) valuesDo: [ :each | 
-				writer nextPut: { 
-						each targetSelector.
-						each targetMethod name.
-						each justified.
-						each removability.
-						each indirectUse.
-						each comment } ] ] ] ifPresent: [ self inspect. self error: 'The file ReflectionUsesResults.csv already exists in this image folder. Please delete it before running self export in the inspector that just opened.'.  ]
-			.
+	| index fileRef |
+	index := 0.
+	fileRef := ('ReflectionUsesResults' , index asString , '.csv')
+		           asFileReference.
+	[ fileRef exists ] whileTrue: [ 
+		index := index + 1.
+		fileRef := ('ReflectionUsesResults' , index asString , '.csv')
+			           asFileReference ].
+	fileRef
+		writeStreamDo: [ :stream | 
+			| writer |
+			writer := NeoCSVWriter on: stream.
+			writer writeHeader:
+				{ 'Selector'. 'Method'. 'Justify'. 'Removable'. 'IndirectUses'.
+				'Comment' }.
+			listOfSelectors do: [ :sel | 
+				(resultDictionary at: sel) valuesDo: [ :each | 
+					writer nextPut: { 
+							each targetSelector.
+							each targetMethod name.
+							each justified.
+							each removability.
+							each indirectUse.
+							each comment } ] ] ]
+		ifPresent: [ 
+			self inspect.
+			self error:
+				'The file ReflectionUsesResults.csv was created in this image folder. Please delete it before running self export in the inspector that just opened.' ].
 ]
 
 { #category : #initialization }
