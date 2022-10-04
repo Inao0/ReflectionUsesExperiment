@@ -29,6 +29,11 @@ CollectionBidirectionalIterator >> collection: anObject [
 	collection := anObject
 ]
 
+{ #category : #enumerating }
+CollectionBidirectionalIterator >> do: aFullBlockClosure [ 
+	collection do: aFullBlockClosure 
+]
+
 { #category : #accessing }
 CollectionBidirectionalIterator >> index [
 	^index

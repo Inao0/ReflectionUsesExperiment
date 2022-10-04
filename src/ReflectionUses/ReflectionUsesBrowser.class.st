@@ -34,7 +34,7 @@ ReflectionUsesBrowser class >> example [
 	"This example opens a spec window with a label."
 	| model |
 	model := (ReflectionUsesModel new listOfSelectors: {#nextInstance . #allInstances}).
-	^ ( self new reflectionUsesModel: model; inspect ; asWindow ) initialExtent: 1200@600; open.
+	^ ( self new reflectionUsesModel: model ; asWindow ) initialExtent: 1200@600; open.
 ]
 
 { #category : #initialization }
@@ -255,6 +255,7 @@ ReflectionUsesBrowser >> setCloseButton [
 	nextButton action: [ 
 		currentResult comment: commentPresenter text.
 		reflectionUsesModel saveResult: currentResult.
+		reflectionUsesModel export.
 		(UIManager default
 		  confirm:
 		  'Finish the experiment and submit answers ?'
