@@ -15,7 +15,6 @@ Class {
 		'justifyButtons',
 		'fixButtons',
 		'justifyQuestionPresenter',
-		'indirectUseLabel',
 		'fixedEasilyQuestionPresenter',
 		'codePresenter',
 		'nextButton',
@@ -23,7 +22,14 @@ Class {
 		'selectorNamePresenter',
 		'commentPresenter',
 		'commentLabel',
-		'currentResult'
+		'currentResult',
+		'testCheckbox',
+		'PackageableQuestionPresenter',
+		'yesPackageableButton',
+		'noPackageableButton',
+		'dontKnowPackageableButton',
+		'packageableQuestionPresenter',
+		'packageableButtons'
 	],
 	#category : #ReflectionUses
 }
@@ -54,9 +60,14 @@ ReflectionUsesBrowser >> connectPresenters [
 	fixButtons do: [ :radioButton | 
 		radioButton whenChangedDo: [ 
 			currentResult removability: self currentRemovabilityAnswer ] ].
+	packageableButtons do: [ :radioButton | 
+		radioButton whenChangedDo: [ 
+			currentResult packageableOptionnally: self currentPackageableAnswer ] ].
 	commentPresenter whenSubmitDo: [ :arg | currentResult comment: arg ].
 	indirectUseCheckBox whenChangedDo: [ 
 		currentResult indirectUse: indirectUseCheckBox state ].
+	testCheckbox whenChangedDo: [ 
+		currentResult testBool: testCheckbox state ].
 
 	nextButton action: [ 
 		currentResult comment: commentPresenter text.
@@ -80,6 +91,12 @@ ReflectionUsesBrowser >> currentJustifyAnswer [
 ReflectionUsesBrowser >> currentMethod [
 
 	^ reflectionUsesModel currentMethod
+]
+
+{ #category : #'as yet unclassified' }
+ReflectionUsesBrowser >> currentPackageableAnswer [
+	dontKnowPackageableButton state ifTrue: [ ^ 'unknown' ].
+	^ yesPackageableButton state 
 ]
 
 { #category : #querying }
@@ -114,9 +131,11 @@ ReflectionUsesBrowser >> defaultResult [
 	^ ReflectionUsesResult new
 		  targetMethod: self currentMethod;
 		  targetSelector: self currentSelector;
+		  testBool: self currentMethod isTestMethod;
 		  justified: 'unknown';
 		  indirectUse: false;
 		  removability: 'unknown';
+		  packageableOptionnally: 'unknown';
 		  comment: ''
 ]
 
@@ -149,13 +168,18 @@ ReflectionUsesBrowser >> initialize [
 ReflectionUsesBrowser >> initializePresenters [
 
 	browseButtonPresenter := SpButtonPresenter new label: 'Browse'.
-
+	
 	codePresenterContext := SpLabelPresenter new label:
 		                        self codePresenterLabelName.
 	codePresenter := SpCodePresenter new
 		                 beNotEditable;
 		                 yourself.
-	selectorNamePresenter := SpLabelPresenter new displayBold: [true].
+	selectorNamePresenter := SpLabelPresenter new displayBold: [ true ].
+	
+	testCheckbox := self newCheckBox
+		                       state: false;
+		                       label: 'This method is a test';
+		                       yourself.
 	justifyQuestionPresenter := SpLabelPresenter new label:
 		                            'Is this use of reflective operation justified ?'.
 	yesJustifyButton := self newRadioButton label: 'yes'.
@@ -181,17 +205,30 @@ ReflectionUsesBrowser >> initializePresenters [
 			              (#yes -> yesFixButton).
 			              (#no -> noFixButton).
 			              (#dontknow -> dontKnowFixButton) }.
+			
+	packageableQuestionPresenter := SpLabelPresenter new label:
+		                                'Can it be packaged as an optionnal method ?'.
+	yesPackageableButton := self newRadioButton label: 'yes'.
+	noPackageableButton := self newRadioButton label: 'no'.
+	dontKnowPackageableButton := self newRadioButton label: 'I dont know'.
+	dontKnowPackageableButton associatedRadioButtons: { 
+			yesPackageableButton.
+			noPackageableButton  }.
+	packageableButtons := Dictionary newFrom: { 
+			              (#yes -> yesPackageableButton ).
+			              (#no -> noPackageableButton ).
+			              (#dontknow -> dontKnowPackageableButton ) }.
+			
+	indirectUseCheckBox := self newCheckBox
+		                       state: false;
+		                       label: 'Remember me for indirect uses';
+		                       yourself.
 
-	indirectUseLabel := SpLabelPresenter new label:
-		                    'Remember me for indirect uses'.
-	indirectUseCheckBox := self newCheckBox state: false.
-	
-	commentLabel  := SpLabelPresenter new label:
-		                    'Comment'.
-	commentPresenter := self newText .
+	commentLabel := SpLabelPresenter new label: 'Comment'.
+	commentPresenter := self newText.
 	backButton := SpButtonPresenter new label: 'Back'.
-	nextButton := SpButtonPresenter new label: 'Next'.
-"	self updateForNewMethod."
+	nextButton := SpButtonPresenter new label: 'Next'
+	"	self updateForNewMethod."
 ]
 
 { #category : #accessing }
@@ -212,6 +249,8 @@ ReflectionUsesBrowser >> rightPanelLayout [
 
 	^ SpBoxLayout newTopToBottom
 		  add: selectorNamePresenter expand: false;
+		  add: testCheckbox expand: false;
+		  add: indirectUseCheckBox expand: false;
 		  add: justifyQuestionPresenter expand: false;
 		  add: (SpBoxLayout newTopToBottom
 				   add: yesJustifyButton;
@@ -219,8 +258,6 @@ ReflectionUsesBrowser >> rightPanelLayout [
 				   add: dontKnowJustifyButton;
 				   yourself)
 		  expand: false;
-		  add: indirectUseLabel expand: false;
-		  add: indirectUseCheckBox expand: false;
 		  add: fixedEasilyQuestionPresenter expand: false;
 		  add: (SpBoxLayout newTopToBottom
 				   add: yesFixButton;
@@ -228,6 +265,14 @@ ReflectionUsesBrowser >> rightPanelLayout [
 				   add: dontKnowFixButton;
 				   yourself)
 		  expand: false;
+		  add: packageableQuestionPresenter expand: false;
+				  add: (SpBoxLayout newTopToBottom
+				   add: yesPackageableButton;
+				   add: noPackageableButton;
+				   add: dontKnowPackageableButton;
+				   yourself)
+		  expand: false;
+
 		  add: commentLabel expand: false;
 		  add: commentPresenter;
 		  add: (SpBoxLayout newLeftToRight
@@ -289,12 +334,16 @@ ReflectionUsesBrowser >> updateForNewMethod [
 	self highlightCurrentSelector.
 	reflectionUsesModel isCurrentMethodLastMethod
 		ifTrue: [ self setCloseButton ]
-		ifFalse: [ self setNextButton ]
+		ifFalse: [ self setNextButton ].
+	reflectionUsesModel isCurrentMethodFirstMethod
+		ifTrue: [ backButton disable  ] ifFalse: [ backButton enable  ] 
+ 
 ]
 
 { #category : #'loading and updating' }
 ReflectionUsesBrowser >> updatePresenterForCurrentResult [
 
+	testCheckbox state: currentResult testBool. 
 	currentResult justified = 'unknown'
 		ifTrue: [ dontKnowJustifyButton state: true ]
 		ifFalse: [ 
@@ -308,5 +357,11 @@ ReflectionUsesBrowser >> updatePresenterForCurrentResult [
 			currentResult removability
 				ifTrue: [ yesFixButton  state: true ]
 				ifFalse: [ noFixButton  state: true ] ].
+		currentResult packageableOptionnally = 'unknown'
+		ifTrue: [ dontKnowPackageableButton state: true ]
+		ifFalse: [ 
+			currentResult packageableOptionnally
+				ifTrue: [ yesPackageableButton state: true ]
+				ifFalse: [ noPackageableButton state: true ] ].
 	commentPresenter text: currentResult comment.
 ]

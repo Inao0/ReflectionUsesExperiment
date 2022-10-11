@@ -7,7 +7,9 @@ Class {
 		'justified',
 		'indirectUse',
 		'removability',
-		'comment'
+		'comment',
+		'testBool',
+		'packageableOptionnally'
 	],
 	#category : #ReflectionUses
 }
@@ -49,6 +51,18 @@ ReflectionUsesResult >> justified: anObject [
 ]
 
 { #category : #accessing }
+ReflectionUsesResult >> packageableOptionnally [
+
+	^ packageableOptionnally
+]
+
+{ #category : #accessing }
+ReflectionUsesResult >> packageableOptionnally: anObject [
+
+	packageableOptionnally := anObject
+]
+
+{ #category : #accessing }
 ReflectionUsesResult >> removability [
 
 	^ removability
@@ -82,4 +96,16 @@ ReflectionUsesResult >> targetSelector [
 ReflectionUsesResult >> targetSelector: anObject [
 
 	targetSelector := anObject
+]
+
+{ #category : #accessing }
+ReflectionUsesResult >> testBool [
+
+	^ testBool
+]
+
+{ #category : #accessing }
+ReflectionUsesResult >> testBool: anObject [
+
+	testBool := anObject
 ]

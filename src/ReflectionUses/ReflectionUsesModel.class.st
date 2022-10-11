@@ -106,6 +106,11 @@ ReflectionUsesModel >> initialize [
 ]
 
 { #category : #saving }
+ReflectionUsesModel >> isCurrentMethodFirstMethod [
+	^ (self currentSelectorNumber = 1) and: (self currentMethodNumber = 1)
+]
+
+{ #category : #saving }
 ReflectionUsesModel >> isCurrentMethodLastMethod [
 	^ (self currentSelectorNumber = listOfSelectors size) and: (self currentMethodNumber = listOfSenders size)
 ]
