@@ -43,6 +43,15 @@ ReflectionUsesBrowser class >> example [
 	^ ( self new reflectionUsesModel: model ; asWindow ) initialExtent: 1200@600; open.
 ]
 
+{ #category : #examples }
+ReflectionUsesBrowser class >> exampleForQuestions [
+
+	"This example opens a spec window with a label."
+	| model |
+	model := (ReflectionUsesModel new listOfSelectors: {#nextInstance}).
+	^ ( self new reflectionUsesModel: model ; asWindow ) initialExtent: 1200@600; open.
+]
+
 { #category : #initialization }
 ReflectionUsesBrowser >> codePresenterLabelName [
 
@@ -53,16 +62,27 @@ ReflectionUsesBrowser >> codePresenterLabelName [
 
 { #category : #initialization }
 ReflectionUsesBrowser >> connectPresenters [
+
 	browseButtonPresenter action: [ self currentMethod browse ].
 	justifyButtons do: [ :radioButton | 
 		radioButton whenChangedDo: [ 
-			currentResult justified: self currentJustifyAnswer ] ].
+			currentResult justified: self currentJustifyAnswer.
+			currentResult isWellDefined
+				ifTrue: [ nextButton enable ]
+				ifFalse: [ nextButton disable ].
+			(currentResult justified == true) ifTrue: [ fixButtons do: [ :fixRadioButton | fixRadioButton disable ] ] ifFalse: [ fixButtons do: [ :fixRadioButton | fixRadioButton enable ] ]  ]].
 	fixButtons do: [ :radioButton | 
 		radioButton whenChangedDo: [ 
-			currentResult removability: self currentRemovabilityAnswer ] ].
+			currentResult removability: self currentRemovabilityAnswer.
+			currentResult isWellDefined
+				ifTrue: [ nextButton enable ]
+				ifFalse: [ nextButton disable ] ] ].
 	packageableButtons do: [ :radioButton | 
 		radioButton whenChangedDo: [ 
-			currentResult packageableOptionnally: self currentPackageableAnswer ] ].
+			currentResult packageableOptionnally: self currentPackageableAnswer.
+			currentResult isWellDefined
+				ifTrue: [ nextButton enable ]
+				ifFalse: [ nextButton disable ] ] ].
 	commentPresenter whenSubmitDo: [ :arg | currentResult comment: arg ].
 	indirectUseCheckBox whenChangedDo: [ 
 		currentResult indirectUse: indirectUseCheckBox state ].
@@ -78,11 +98,12 @@ ReflectionUsesBrowser >> connectPresenters [
 		currentResult comment: commentPresenter text.
 		reflectionUsesModel saveResult: currentResult.
 		reflectionUsesModel previous.
-		self updateForNewMethod ]
+		self updateForNewMethod ] 
 ]
 
 { #category : #querying }
 ReflectionUsesBrowser >> currentJustifyAnswer [
+	dontKnowJustifyButton isAnyButtonSelected ifFalse: [ ^ '' ].
 	dontKnowJustifyButton state ifTrue: [ ^ 'unknown' ].
 	^ yesJustifyButton state 
 ]
@@ -95,12 +116,16 @@ ReflectionUsesBrowser >> currentMethod [
 
 { #category : #'as yet unclassified' }
 ReflectionUsesBrowser >> currentPackageableAnswer [
+
+	dontKnowPackageableButton isAnyButtonSelected ifFalse: [ ^ '' ].
 	dontKnowPackageableButton state ifTrue: [ ^ 'unknown' ].
 	^ yesPackageableButton state 
 ]
 
 { #category : #querying }
 ReflectionUsesBrowser >> currentRemovabilityAnswer [
+
+	dontKnowFixButton isAnyButtonSelected ifFalse: [ ^ '' ].
 	dontKnowFixButton  state ifTrue: [ ^ 'unknown' ].
 	^ yesFixButton state 
 ]
@@ -132,10 +157,10 @@ ReflectionUsesBrowser >> defaultResult [
 		  targetMethod: self currentMethod;
 		  targetSelector: self currentSelector;
 		  testBool: self currentMethod isTestMethod;
-		  justified: 'unknown';
+		  justified: '';
 		  indirectUse: false;
-		  removability: 'unknown';
-		  packageableOptionnally: 'unknown';
+		  removability: '';
+		  packageableOptionnally: '';
 		  comment: ''
 ]
 
@@ -194,16 +219,16 @@ ReflectionUsesBrowser >> initializePresenters [
 			                  (#dontknow -> dontKnowJustifyButton) }.
 
 	fixedEasilyQuestionPresenter := SpLabelPresenter new label:
-		                                'Can it be removed/replaced quickly ?'.
-	yesFixButton := self newRadioButton label: 'yes'.
-	noFixButton := self newRadioButton label: 'no'.
+		                                'If it is not justify, this method should be'.
+	yesFixButton := self newRadioButton label: 'Removed'.
+	noFixButton := self newRadioButton label: 'Rewritten'.
 	dontKnowFixButton := self newRadioButton label: 'I dont know'.
 	dontKnowFixButton associatedRadioButtons: { 
 			yesFixButton.
 			noFixButton }.
 	fixButtons := Dictionary newFrom: { 
-			              (#yes -> yesFixButton).
-			              (#no -> noFixButton).
+			              (#Removed -> yesFixButton).
+			              (#Rewritten -> noFixButton).
 			              (#dontknow -> dontKnowFixButton) }.
 			
 	packageableQuestionPresenter := SpLabelPresenter new label:
@@ -336,32 +361,41 @@ ReflectionUsesBrowser >> updateForNewMethod [
 		ifTrue: [ self setCloseButton ]
 		ifFalse: [ self setNextButton ].
 	reflectionUsesModel isCurrentMethodFirstMethod
-		ifTrue: [ backButton disable  ] ifFalse: [ backButton enable  ] 
- 
+		ifTrue: [ backButton disable  ] ifFalse: [ backButton enable  ]. 
+ 	currentResult isWellDefined ifTrue: [ nextButton enable  ] ifFalse: [ nextButton disable  ].
 ]
 
 { #category : #'loading and updating' }
 ReflectionUsesBrowser >> updatePresenterForCurrentResult [
 
-	testCheckbox state: currentResult testBool. 
-	currentResult justified = 'unknown'
-		ifTrue: [ dontKnowJustifyButton state: true ]
+	testCheckbox state: currentResult testBool.
+	currentResult justified = ''
+		ifTrue: [ dontKnowJustifyButton deselectAllButtons ]
 		ifFalse: [ 
-			currentResult justified
-				ifTrue: [ yesJustifyButton state: true ]
-				ifFalse: [ noJustifyButton state: true ] ].
+			currentResult justified = 'unknown'
+				ifTrue: [ dontKnowJustifyButton state: true ]
+				ifFalse: [ 
+					currentResult justified
+						ifTrue: [ yesJustifyButton state: true ]
+						ifFalse: [ noJustifyButton state: true ] ] ].
 	indirectUseCheckBox state: currentResult indirectUse.
-	currentResult removability = 'unknown'
-		ifTrue: [ dontKnowFixButton state: true ]
+	currentResult removability  = ''
+		ifTrue: [ dontKnowFixButton deselectAllButtons ]
 		ifFalse: [ 
-			currentResult removability
-				ifTrue: [ yesFixButton  state: true ]
-				ifFalse: [ noFixButton  state: true ] ].
-		currentResult packageableOptionnally = 'unknown'
-		ifTrue: [ dontKnowPackageableButton state: true ]
+			currentResult removability = 'unknown'
+				ifTrue: [ dontKnowFixButton state: true ]
+				ifFalse: [ 
+					currentResult removability
+						ifTrue: [ yesFixButton state: true ]
+						ifFalse: [ noFixButton state: true ] ] ].
+	currentResult packageableOptionnally  = ''
+		ifTrue: [ dontKnowPackageableButton deselectAllButtons ]
 		ifFalse: [ 
-			currentResult packageableOptionnally
-				ifTrue: [ yesPackageableButton state: true ]
-				ifFalse: [ noPackageableButton state: true ] ].
-	commentPresenter text: currentResult comment.
+			currentResult packageableOptionnally = 'unknown'
+				ifTrue: [ dontKnowPackageableButton state: true ]
+				ifFalse: [ 
+					currentResult packageableOptionnally
+						ifTrue: [ yesPackageableButton state: true ]
+						ifFalse: [ noPackageableButton state: true ] ] ].
+	commentPresenter text: currentResult comment
 ]

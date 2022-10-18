@@ -39,6 +39,11 @@ ReflectionUsesResult >> indirectUse: anObject [
 ]
 
 { #category : #accessing }
+ReflectionUsesResult >> isWellDefined [
+	^ (justified ~= '' and: [ (justified=true)  or: [ removability ~= '' ]] )and: [ packageableOptionnally ~= '' ] 
+]
+
+{ #category : #accessing }
 ReflectionUsesResult >> justified [
 
 	^ justified
