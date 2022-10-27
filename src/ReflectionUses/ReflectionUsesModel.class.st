@@ -14,10 +14,8 @@ Class {
 { #category : #navigating }
 ReflectionUsesModel >> backwardCurrentSelector: aSelector [
 	currentSelector := aSelector.
-	listOfSenders := (CollectionBidirectionalIterator on:
-		                 (currentSelector
-			                  ifNotNil: [ currentSelector senders ]
-			                  ifNil: [ {  } ])) setToEnd .
+	self updateListOfSenders.
+	listOfSenders setToEnd .
 	self currentMethod: listOfSenders previous.
 
 ]
@@ -54,10 +52,7 @@ ReflectionUsesModel >> currentSelector [
 ReflectionUsesModel >> currentSelector: aSelector [
 
 	currentSelector := aSelector.
-	listOfSenders := CollectionBidirectionalIterator on:
-		                 (currentSelector
-			                  ifNotNil: [ currentSelector senders ]
-			                  ifNil: [ {  } ]).
+	self updateListOfSenders.
 	self currentMethod: listOfSenders next
 ]
 
@@ -161,11 +156,8 @@ ReflectionUsesModel >> resetFromListOfSelectors [
 
 	listOfSelectors reset.
 	currentSelector := listOfSelectors next.
-	listOfSenders := CollectionBidirectionalIterator on:
-		                 (currentSelector
-			                  ifNotNil: [ currentSelector senders ]
-			                  ifNil: [ {} ]).
-	currentMethod := listOfSenders next.
+	self updateListOfSenders.
+	currentMethod := listOfSenders next
 ]
 
 { #category : #accessing }
@@ -183,4 +175,13 @@ ReflectionUsesModel >> resultDictionary: anObject [
 { #category : #saving }
 ReflectionUsesModel >> saveResult: aReflectionUsesResult [ 
 	(resultDictionary at: aReflectionUsesResult targetSelector) at: aReflectionUsesResult targetMethod put: aReflectionUsesResult.
+]
+
+{ #category : #initialization }
+ReflectionUsesModel >> updateListOfSenders [
+
+	listOfSenders := CollectionBidirectionalIterator on:
+		                 (currentSelector
+			                  ifNotNil: [ currentSelector senders ]
+			                  ifNil: [ {  } ])
 ]

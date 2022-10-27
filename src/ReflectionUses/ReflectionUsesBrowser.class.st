@@ -44,12 +44,230 @@ ReflectionUsesBrowser class >> example [
 ]
 
 { #category : #examples }
-ReflectionUsesBrowser class >> exampleForQuestions [
+ReflectionUsesBrowser class >> exampleForGuille [
 
 	"This example opens a spec window with a label."
 	| model |
-	model := (ReflectionUsesModel new listOfSelectors: {#nextInstance}).
+	model := (ReflectionUsesModelForQuestionsTest new listOfSelectors: self thirdThirdOfSelectors).
 	^ ( self new reflectionUsesModel: model ; asWindow ) initialExtent: 1200@600; open.
+]
+
+{ #category : #examples }
+ReflectionUsesBrowser class >> exampleForPablo [
+
+	"This example opens a spec window with a label."
+	| model |
+	model := (ReflectionUsesModelForQuestionsTest new listOfSelectors: self secondThirdOfSelectors).
+	^ ( self new reflectionUsesModel: model ; asWindow ) initialExtent: 1200@600; open.
+]
+
+{ #category : #examples }
+ReflectionUsesBrowser class >> exampleForStephane [
+
+	"This example opens a spec window with a label."
+	| model |
+	model := (ReflectionUsesModelForQuestionsTest new listOfSelectors: self firstThirdOfSelectors).
+	^ ( self new reflectionUsesModel: model ; asWindow ) initialExtent: 1200@600; open.
+]
+
+{ #category : #examples }
+ReflectionUsesBrowser class >> exampleTestForFewSenders [
+
+	"This example opens a spec window with a label."
+	| model |
+	model := (ReflectionUsesModelForQuestionsTest new listOfSelectors: {#adoptInstance:from: . #someObject . #isMemberOf }).
+	^ ( self new reflectionUsesModel: model ; asWindow ) initialExtent: 1200@600; open.
+]
+
+{ #category : #accessing }
+ReflectionUsesBrowser class >> firstThirdOfSelectors [
+	"comment stating purpose of class-side method"
+	"scope: class-variables  &  class-instance-variables"	
+			
+	^ { #weakSubclass:instanceVariableNames:classVariableNames:poolDictionaries:package:
+. #cannotInterpret:
+. #variableByteSubclass:instanceVariableNames:classVariableNames:category:
+. #basicIdentityHash
+. #adoptInstance:from:
+. #subclass:slots:classVariables:poolDictionaries:package:
+. #usesLocalPoolVarNamed:
+. #subclass:layout:slots:classVariables:package:
+. #perform:with:with:with:
+. #isKindOf:
+. #classesThatImplementAllOf:
+. #allSuperclassesallSubclassesWithLevelDo:startingLevel:
+. #variableSubclass:instanceVariableNames:classVariableNames:package:
+. #subclass:instanceVariableNames:classVariableNames:poolDictionaries:package:
+. #variableByteSubclass:instanceVariableNames:classVariableNames:package:
+. #allInstVarNames
+. #instVarNamed:
+. #variableSubclass:instanceVariableNames:classVariableNames:category:
+. #becomeForward:copyHash:
+. #addSlot:
+. #definesClassVariableNamed:
+. #basicSuperclass:
+. #definedVariables
+. #variableWordSubclass:instanceVariableNames:classVariableNames:poolDictionaries:category:
+. #pointsOnlyWeaklyTo:
+. #newSubclass
+. #perform:with:with:
+. #classSide
+. #subclasses
+. #weakSubclass:instanceVariableNames:classVariableNames:package:
+. #usesClassVarNamed:
+. #instanceSide
+. #primitiveChangeClassTo:
+. #addObsoleteSubclass:
+. #instVarAt:
+. #adoptInstance:
+. #commonSuperclassWith:
+. #pointsTo:
+. #addSubclass:
+. #sharedPools
+. #hasSubclasses
+. #definedVariables
+. #superclass:
+. #allSubclasses
+. #object:basicAt:
+. #perform:withEnoughArguments:
+. #subclassesDo:
+. #variableByteSubclass:instanceVariableNames:classVariableNames:poolDictionaries:category:
+. #subclass:
+. #objectClass:
+. #pointersTo
+. #variableDoubleWordSubclass:instanceVariableNames:classVariableNames:package:
+. #isAnonymous
+. #someInstance
+. #class
+. #writeSlot:value:}
+]
+
+{ #category : #accessing }
+ReflectionUsesBrowser class >> secondThirdOfSelectors [
+	"comment stating purpose of class-side method"
+	"scope: class-variables  &  class-instance-variables"	
+			
+	^ {#allSharedPools
+. #classesThatImplementAllOf:
+. #withAllSuperAndSubclasses
+. #becomeForward:
+. #variableWordSubclass:instanceVariableNames:classVariableNames:poolDictionaries:package:
+. #perform:orSendTo:
+. #perform:withArguments:inSuperclass:
+. #someObject
+. #hasMethods
+. #isObsolete
+. #readSlotNamed:
+. #hasAbstractMethods
+. #isMemberOf
+. #ephemeronSubclass:instanceVariableNames:classVariableNames:poolDictionaries:category:
+. #allSuperclasses
+. #immediateSubclass:instanceVariableNames:classVariableNames:package:
+. #writeClassVariableNamed:value:
+. #usesPoolVarNamed:
+. #doesNotUnderstand:
+. #definesClassVariable:
+. #subclass:slots:classVariables:package:
+. #pointersToExcept:among:
+. #objectSize:
+. #instVarsInclude:
+. #readSlot:
+. #object:basicAt:put:
+. #ephemeronSubclass:instanceVariableNames:classVariableNames:poolDictionaries:package:
+. #pointersToAmong:
+. #allSuperclassesIncluding:
+. #removeClassVarNamed:interactive:
+. #object:instVarAt:put:
+. #allClassVarNames
+. #immediateSubclass:instanceVariableNames:classVariableNames:poolDictionaries:category:
+. #identityHash
+. #object:instVarAt:
+. #classPool
+. #executeMethod:
+. #instVarAt:put:
+. #variableWordSubclass:instanceVariableNames:classVariableNames:category:
+. #subclass:instanceVariableNames:classVariableNames:poolDictionaries:category:
+. #perform:
+. #object:perform:withArguments:inClass:
+. #weakSubclass:instanceVariableNames:classVariableNames:category:
+. #perform:with:with:with:with:
+. #in:
+. #nextInstance
+. #className
+. #subclasses:
+. #hasSharedPools
+. #isUsed
+. #sharedPoolNames
+. #withAllSubclassesDo:
+. #instanceVariables
+. #hasClassSide
+. #classVariableNamed:ifAbsent:
+. #writeSlotNamed:value:
+}
+]
+
+{ #category : #accessing }
+ReflectionUsesBrowser class >> thirdThirdOfSelectors [
+	"comment stating purpose of class-side method"
+	"scope: class-variables  &  class-instance-variables"	
+			
+	^ { #perform:withArguments:
+. #allSharedPools
+. #isMetaclassOfClassOrNil
+. #ephemeronSubclass:instanceVariableNames:classVariableNames:package:
+. #variableSubclass:instanceVariableNames:classVariableNames:poolDictionaries:package:
+. #withArgs:executeMethod:
+. #classBuilder
+. #instVarNamed:put:
+. #object:instVarAt:put:
+. #pointersToExcept:
+. #removeClassVariable:
+. #withAllSuperclasses
+. #readClassVariableNamed:
+. #classVarNames
+. #withAllSubclasses
+. #superclass
+. #subclass:instanceVariableNames:classVariableNames:package:
+. #variableDoubleByteSubclass:instanceVariableNames:classVariableNames:package:
+. #sharedPoolNames
+. #removeSubclass:
+. #respondsTo:
+. #obsoleteSubclasses
+. #subclass:instanceVariableNames:classVariableNames:category:
+. #variableWordSubclass:instanceVariableNames:classVariableNames:package:
+. #removeSharedPool:
+. #tryPrimitive:withArgs:
+. #classInstaller
+. #become:
+. #classPool:
+. #classVariables
+. #sharedPoolOfVarNamed:
+. #isClassOrTrait
+. #object:eqeq:
+. #isMeta
+. #immediateSubclass:instanceVariableNames:classVariableNames:poolDictionaries:package:
+. #isClass
+. #newAnonymousSubclass
+. #addInstVarNamed:
+. #receiver:withArguments:executeMethod:
+. #perform:with:
+. #variableByteSubclass:instanceVariableNames:classVariableNames:poolDictionaries:package:
+. #addSharedPool:
+. #weakSubclass:instanceVariableNames:classVariableNames:poolDictionaries:category:
+. #instVarNames
+. #subclass:layout:slots:classVariables:poolDictionaries:package:
+. #variableSubclass:instanceVariableNames:classVariableNames:poolDictionaries:category:
+. #hasClassVarNamed:
+. #addSharedPoolNamed:
+. #nextObject
+. #removeSlot:
+. #sharedPoolsDo:
+. #hasClassVariable:
+. #valueWithReceiver:arguments:
+. #removeClassVarNamed:
+. #sharedPools:
+. #subclass:instanceVariableNames:
+}
 ]
 
 { #category : #initialization }
@@ -70,7 +288,7 @@ ReflectionUsesBrowser >> connectPresenters [
 			currentResult isWellDefined
 				ifTrue: [ nextButton enable ]
 				ifFalse: [ nextButton disable ].
-			(currentResult justified == true) ifTrue: [ fixButtons do: [ :fixRadioButton | fixRadioButton disable ] ] ifFalse: [ fixButtons do: [ :fixRadioButton | fixRadioButton enable ] ]  ]].
+			(currentResult justified == true) ifTrue: [ dontKnowFixButton deselectAllButtons. fixButtons do: [ :fixRadioButton | fixRadioButton disable ] ] ifFalse: [ fixButtons do: [ :fixRadioButton | fixRadioButton enable ] ]  ]].
 	fixButtons do: [ :radioButton | 
 		radioButton whenChangedDo: [ 
 			currentResult removability: self currentRemovabilityAnswer.
