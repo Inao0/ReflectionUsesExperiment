@@ -77,13 +77,15 @@ ReflectionUsesModel >> export [
 			| writer |
 			writer := NeoCSVWriter on: stream.
 			writer writeHeader:
-				{ 'Selector'. 'Method'. 'Justify'. 'Removable'. 'IndirectUses'.
+				{ 'Selector'. 'Method'. 'Package' . 'isTestRelated' . 'Justify'. 'Removable'. 'IndirectUses'.
 				'Comment' }.
 			listOfSelectors do: [ :sel | 
 				(resultDictionary at: sel) valuesDo: [ :each | 
 					writer nextPut: { 
 							each targetSelector.
 							each targetMethod name.
+							each targetMethod methodClass package name.
+							each testBool. 
 							each justified.
 							each removability.
 							each indirectUse.
