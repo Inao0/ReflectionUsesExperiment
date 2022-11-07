@@ -184,6 +184,6 @@ ReflectionUsesModel >> updateListOfSenders [
 
 	listOfSenders := CollectionBidirectionalIterator on:
 		                 (currentSelector
-			                  ifNotNil: [ currentSelector senders ]
+			                  ifNotNil: [ currentSelector senders reject: [ :sender | sender methodClass package = self class package ] ]
 			                  ifNil: [ {  } ])
 ]

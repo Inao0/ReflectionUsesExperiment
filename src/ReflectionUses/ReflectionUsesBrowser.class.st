@@ -288,7 +288,8 @@ ReflectionUsesBrowser >> connectPresenters [
 			currentResult isWellDefined
 				ifTrue: [ nextButton enable ]
 				ifFalse: [ nextButton disable ].
-			(currentResult justified == true) ifTrue: [ dontKnowFixButton deselectAllButtons. fixButtons do: [ :fixRadioButton | fixRadioButton disable ] ] ifFalse: [ fixButtons do: [ :fixRadioButton | fixRadioButton enable ] ]  ]].
+			(currentResult justified ~= false) ifTrue: [ dontKnowFixButton deselectAllButtons. fixButtons do: [ :fixRadioButton | fixRadioButton disable ] ] ifFalse: [ fixButtons do: [ :fixRadioButton | fixRadioButton enable ] ].
+			(currentResult justified = 'unknown' and: [packageableButtons noneSatisfy: [:button | button state]]) ifTrue: [ dontKnowPackageableButton toggleState  ]  ]].
 	fixButtons do: [ :radioButton | 
 		radioButton whenChangedDo: [ 
 			currentResult removability: self currentRemovabilityAnswer.
