@@ -29,7 +29,9 @@ Class {
 		'noPackageableButton',
 		'dontKnowPackageableButton',
 		'packageableQuestionPresenter',
-		'packageableButtons'
+		'packageableButtons',
+		'categoryAndDescriptionPresenter',
+		'changeCategoryButton'
 	],
 	#category : #ReflectionUses
 }
@@ -39,7 +41,7 @@ ReflectionUsesBrowser class >> example [
 
 	"This example opens a spec window with a label."
 	| model |
-	model := (ReflectionUsesModel new listOfSelectors: {#nextInstance . #allInstances}).
+	model := (ReflectionUsesModel new listOfSelectors: {#nextInstance }).
 	^ ( self new reflectionUsesModel: model ; asWindow ) initialExtent: 1200@600; open.
 ]
 
@@ -67,6 +69,15 @@ ReflectionUsesBrowser class >> exampleForStephane [
 	"This example opens a spec window with a label."
 	| model |
 	model := (ReflectionUsesModelForQuestionsTest new listOfSelectors: self firstThirdOfSelectors).
+	^ ( self new reflectionUsesModel: model ; asWindow ) initialExtent: 1200@600; open.
+]
+
+{ #category : #examples }
+ReflectionUsesBrowser class >> exampleFromFile [
+
+	"This example opens a spec window with a label."
+	| model |
+	model := (ReflectionUsesModelForQuestionsTestFromFiles fromFileOfSelectors: '/Users/iona/Documents/these/Papiers perso/MirrorsForReflection/data/selectors.csv' withCategories: '/Users/iona/Documents/these/Papiers perso/MirrorsForReflection/data/categories.csv').
 	^ ( self new reflectionUsesModel: model ; asWindow ) initialExtent: 1200@600; open.
 ]
 
@@ -275,7 +286,7 @@ ReflectionUsesBrowser >> codePresenterLabelName [
 
 	self currentMethod ifNil: [ 
 		^ ' [Class Name]>>[method Name] in [Package Name] package' ].
-	^ self currentMethod methodClass name, '>>', self currentSelector, ' in {', self currentMethod class package name, ']'.
+	^ self currentMethod methodClass name, '>>', self currentMethod selector, ' in {', self currentMethod class package name, ']'.
 ]
 
 { #category : #initialization }
@@ -318,6 +329,18 @@ ReflectionUsesBrowser >> connectPresenters [
 		reflectionUsesModel saveResult: currentResult.
 		reflectionUsesModel previous.
 		self updateForNewMethod ] 
+]
+
+{ #category : #accessing }
+ReflectionUsesBrowser >> currentCategory [
+
+	^ reflectionUsesModel currentCategory 
+]
+
+{ #category : #accessing }
+ReflectionUsesBrowser >> currentCategoryDescription [
+
+	^ reflectionUsesModel currentCategoryDescription 
 ]
 
 { #category : #querying }
@@ -375,7 +398,7 @@ ReflectionUsesBrowser >> defaultResult [
 	^ ReflectionUsesResult new
 		  targetMethod: self currentMethod;
 		  targetSelector: self currentSelector;
-		  testBool: self currentMethod isTestMethod;
+		  testBool: (self currentMethod ifNotNil: [ self currentMethod isTestMethod] ifNil: [false]);
 		  justified: '';
 		  indirectUse: false;
 		  removability: '';
@@ -412,7 +435,8 @@ ReflectionUsesBrowser >> initialize [
 ReflectionUsesBrowser >> initializePresenters [
 
 	browseButtonPresenter := SpButtonPresenter new label: 'Browse'.
-	
+	changeCategoryButton := SpButtonPresenter new label: 'Change Category of this selector'.
+	categoryAndDescriptionPresenter := CategoryPresenter new.
 	codePresenterContext := SpLabelPresenter new label:
 		                        self codePresenterLabelName.
 	codePresenter := SpCodePresenter new
@@ -465,7 +489,7 @@ ReflectionUsesBrowser >> initializePresenters [
 			
 	indirectUseCheckBox := self newCheckBox
 		                       state: false;
-		                       label: 'Remember me for indirect uses';
+		                       label: 'Remember me for indirect uses - I am part of the extended MOP';
 		                       yourself.
 
 	commentLabel := SpLabelPresenter new label: 'Comment'.
@@ -493,6 +517,8 @@ ReflectionUsesBrowser >> rightPanelLayout [
 
 	^ SpBoxLayout newTopToBottom
 		  add: selectorNamePresenter expand: false;
+		  add: categoryAndDescriptionPresenter;
+		  add: changeCategoryButton expand: false;
 		  add: testCheckbox expand: false;
 		  add: indirectUseCheckBox expand: false;
 		  add: justifyQuestionPresenter expand: false;
@@ -548,7 +574,7 @@ ReflectionUsesBrowser >> setCloseButton [
 		(UIManager default
 		  confirm:
 		  'Finish the experiment and submit answers ?'
-		  label: 'Proceed?') ifTrue: [ self owner close  ].
+		  label: 'Proceed?') ifTrue: [ self owner close. reflectionUsesModel inspect  ].
 		 ]
 ]
 
@@ -567,7 +593,9 @@ ReflectionUsesBrowser >> setNextButton [
 ReflectionUsesBrowser >> updateForNewMethod [
 
 	codePresenterContext label: self codePresenterLabelName.
-	self currentMethod ifNil: [ codePresenter text: '' ] ifNotNil: [ 
+	categoryAndDescriptionPresenter category: self currentCategory;
+	description: self currentCategoryDescription.
+	self currentMethod ifNil: [ codePresenter text: '"There is no sender for the current selector. Please only assess the category of the selector."' ] ifNotNil: [ 
 		codePresenter
 			beForMethod: self currentMethod;
 			text: self currentMethod sourceCode ].
