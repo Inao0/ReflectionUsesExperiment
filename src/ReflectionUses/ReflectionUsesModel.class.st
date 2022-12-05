@@ -77,15 +77,18 @@ ReflectionUsesModel >> export [
 			| writer |
 			writer := NeoCSVWriter on: stream.
 			writer writeHeader:
-				{ 'Selector'. 'Method'. 'Package' . 'isTestRelated' . 'Justify'. 'Removable'. 'IndirectUses'.
+				{ 'Selector'. 'Category'. 'Description'. 'Method'. 'Package'.
+				'isTestRelated'. 'Justify'. 'Removable'. 'IndirectUses'.
 				'Comment' }.
 			listOfSelectors do: [ :sel | 
 				(resultDictionary at: sel) valuesDo: [ :each | 
 					writer nextPut: { 
 							each targetSelector.
+							each halt.
+							each .
 							each targetMethod name.
 							each targetMethod methodClass package name.
-							each testBool. 
+							each testBool.
 							each justified.
 							each removability.
 							each indirectUse.
@@ -93,7 +96,7 @@ ReflectionUsesModel >> export [
 		ifPresent: [ 
 			self inspect.
 			self error:
-				'The file ReflectionUsesResults.csv was created in this image folder. Please delete it before running self export in the inspector that just opened.' ].
+				'The file ReflectionUsesResults.csv was created in this image folder. Please delete it before running self export in the inspector that just opened.' ]
 ]
 
 { #category : #initialization }

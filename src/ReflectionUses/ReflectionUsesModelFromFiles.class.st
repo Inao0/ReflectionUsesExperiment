@@ -26,9 +26,9 @@ ReflectionUsesModelFromFiles class >> fromFileOfSelectors: aFilePathForSelectors
 		                     aFilePathForCategories asFileReference
 			                     readStream) separator: $;.
 	categoriesAndDescriptions := (categoriesReader collect: [ :record | 
-		                              record first -> record second ])
+		                              record first -> (Category new name: record first; description: record second) ])
 		                             asDictionary.
-	categoriesAndDescriptions removeKey: nil.
+	categoriesAndDescriptions removeKey: nil ifAbsent: [].
 	selectorsAndCategories := (selectorsReader collect: [ :record | 
 		                           record first asSymbol -> record second ])
 		                          asDictionary.
@@ -53,6 +53,12 @@ ReflectionUsesModelFromFiles >> backwardCurrentSelector: aSelector [
 ]
 
 { #category : #accessing }
+ReflectionUsesModelFromFiles >> categories [
+
+	^ categoriesAndDescriptions values
+]
+
+{ #category : #accessing }
 ReflectionUsesModelFromFiles >> categoriesAndDescriptions: aCollection [ 
 	categoriesAndDescriptions := aCollection
 ]
@@ -60,13 +66,7 @@ ReflectionUsesModelFromFiles >> categoriesAndDescriptions: aCollection [
 { #category : #accessing }
 ReflectionUsesModelFromFiles >> currentCategory [
 
-	^ selectorsAndCategories at: currentSelector ifAbsent: [ '' ]
-]
-
-{ #category : #accessing }
-ReflectionUsesModelFromFiles >> currentCategoryDescription [
-
-	^ categoriesAndDescriptions at: self currentCategory ifAbsent: [ '' ].
+	^ categoriesAndDescriptions  at: ( selectorsAndCategories at: currentSelector) ifAbsent: [ Category new ]
 ]
 
 { #category : #accessing }
@@ -126,15 +126,23 @@ ReflectionUsesModelFromFiles >> export [
 			| writer |
 			writer := NeoCSVWriter on: stream.
 			writer writeHeader:
-				{ 'Selector'. 'Method'. 'Package' . 'isTestRelated' . 'Justify'. 'Removable'. 'IndirectUses'.
+				{ 'Selector'. 'Category'. 'Description'. 'Method'. 'Package'.
+				'isTestRelated'. 'Justify'. 'Removable'. 'IndirectUses'.
 				'Comment' }.
 			listOfSelectors do: [ :sel | 
 				(ResultDictionary at: sel) valuesDo: [ :each | 
 					writer nextPut: { 
 							each targetSelector.
-							each targetMethod ifNotNil: [each targetMethod name] ifNil: ['NoMethod'].
-							each targetMethod ifNotNil: [each targetMethod methodClass package name] ifNil: ['NoMethod'].
-							each testBool. 
+							(selectorsAndCategories at: each targetSelector).
+							(categoriesAndDescriptions at:
+								 (selectorsAndCategories at: each targetSelector)) description.
+							(each targetMethod
+								 ifNotNil: [ each targetMethod name ]
+								 ifNil: [ 'NoMethod' ]).
+							(each targetMethod
+								 ifNotNil: [ each targetMethod methodClass package name ]
+								 ifNil: [ 'NoMethod' ]).
+							each testBool.
 							each justified.
 							each removability.
 							each indirectUse.
@@ -142,7 +150,7 @@ ReflectionUsesModelFromFiles >> export [
 		ifPresent: [ 
 			self inspect.
 			self error:
-				'The file ReflectionUsesResults.csv was created in this image folder. Please delete it before running self export in the inspector that just opened.' ].
+				'The file ReflectionUsesResults.csv was created in this image folder. Please delete it before running self export in the inspector that just opened.' ]
 ]
 
 { #category : #initialization }
@@ -234,11 +242,27 @@ ReflectionUsesModelFromFiles >> selectorsAndCategories: aCollection [
 	self listOfSelectors: selectorsAndCategories keys.
 ]
 
+{ #category : #accessing }
+ReflectionUsesModelFromFiles >> setSelector: aSelector category: aCategory [
+
+	selectorsAndCategories at: aSelector put: aCategory.
+]
+
 { #category : #initialization }
 ReflectionUsesModelFromFiles >> updateListOfSenders [
 
+	| senders |
 	listOfSenders := CollectionBidirectionalIterator on:
 		                 (currentSelector
-			                  ifNotNil: [ currentSelector senders reject: [ :sender | sender methodClass package = self class package ] ]
+			                  ifNotNil: [ 
+				                  currentSelector = 'thisContext'
+					                  ifTrue: [ 
+						                  senders := Smalltalk globals allMethods 
+							                             select: [ :method | 
+							                             method readsThisContext ] ]
+					                  ifFalse: [ senders := currentSelector senders ].
+				                  senders := senders reject: [ :sender | 
+					                             sender methodClass package
+					                             = self class package ].]
 			                  ifNil: [ {  } ])
 ]

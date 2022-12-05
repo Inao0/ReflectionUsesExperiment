@@ -293,10 +293,11 @@ ReflectionUsesBrowser >> codePresenterLabelName [
 ReflectionUsesBrowser >> connectPresenters [
 
 	browseButtonPresenter action: [ self currentMethod browse ].
+	changeCategoryButton action: [ self openSelectorCategoryMenu ].
 	justifyButtons do: [ :radioButton | 
 		radioButton whenChangedDo: [ 
 			currentResult justified: self currentJustifyAnswer.
-			currentResult isWellDefined
+			(currentResult isWellDefined and: [self currentCategory isNotEmpty])
 				ifTrue: [ nextButton enable ]
 				ifFalse: [ nextButton disable ].
 			(currentResult justified ~= false) ifTrue: [ dontKnowFixButton deselectAllButtons. fixButtons do: [ :fixRadioButton | fixRadioButton disable ] ] ifFalse: [ fixButtons do: [ :fixRadioButton | fixRadioButton enable ] ].
@@ -304,13 +305,13 @@ ReflectionUsesBrowser >> connectPresenters [
 	fixButtons do: [ :radioButton | 
 		radioButton whenChangedDo: [ 
 			currentResult removability: self currentRemovabilityAnswer.
-			currentResult isWellDefined
+			(currentResult isWellDefined and: [self currentCategory isNotEmpty])
 				ifTrue: [ nextButton enable ]
 				ifFalse: [ nextButton disable ] ] ].
 	packageableButtons do: [ :radioButton | 
 		radioButton whenChangedDo: [ 
 			currentResult packageableOptionnally: self currentPackageableAnswer.
-			currentResult isWellDefined
+			(currentResult isWellDefined and: [self currentCategory isNotEmpty])
 				ifTrue: [ nextButton enable ]
 				ifFalse: [ nextButton disable ] ] ].
 	commentPresenter whenSubmitDo: [ :arg | currentResult comment: arg ].
@@ -335,12 +336,6 @@ ReflectionUsesBrowser >> connectPresenters [
 ReflectionUsesBrowser >> currentCategory [
 
 	^ reflectionUsesModel currentCategory 
-]
-
-{ #category : #accessing }
-ReflectionUsesBrowser >> currentCategoryDescription [
-
-	^ reflectionUsesModel currentCategoryDescription 
 ]
 
 { #category : #querying }
@@ -475,7 +470,7 @@ ReflectionUsesBrowser >> initializePresenters [
 			              (#dontknow -> dontKnowFixButton) }.
 			
 	packageableQuestionPresenter := SpLabelPresenter new label:
-		                                'Can it be packaged as an optionnal method ?'.
+		                                'Can it be packaged as an optional method ?'.
 	yesPackageableButton := self newRadioButton label: 'yes'.
 	noPackageableButton := self newRadioButton label: 'no'.
 	dontKnowPackageableButton := self newRadioButton label: 'I dont know'.
@@ -497,6 +492,38 @@ ReflectionUsesBrowser >> initializePresenters [
 	backButton := SpButtonPresenter new label: 'Back'.
 	nextButton := SpButtonPresenter new label: 'Next'
 	"	self updateForNewMethod."
+]
+
+{ #category : #'as yet unclassified' }
+ReflectionUsesBrowser >> openCategoryPrompt [
+	self shouldBeImplemented.
+]
+
+{ #category : #'as yet unclassified' }
+ReflectionUsesBrowser >> openSelectorCategoryMenu [
+	| menu |
+	menu := SpMenuPresenter new.
+	reflectionUsesModel categories do: [ :eachCat |
+		menu addItem: [ :item | item name: eachCat name; description: eachCat description; action: [ reflectionUsesModel setSelector: self currentSelector category: eachCat name. self updateForNewMethod ] ]].
+	menu addItem:  [ :item | item name: 'New Category'; description: 'Define a new category. Please check the existing ones first'; action: [ self promptCategory. self updateForNewMethod. ]].
+	menu openWithSpecAt: self currentHand position.
+]
+
+{ #category : #'as yet unclassified' }
+ReflectionUsesBrowser >> promptCategory [
+
+	| newCategory editor |
+	newCategory := Category new.
+	editor := CategoryEditionPresenter on: newCategory.
+	editor asModalWindow
+		okAction: [ editor save ];
+		open.
+	newCategory isEmpty ifFalse: [ 
+		reflectionUsesModel addCategory: newCategory.
+		reflectionUsesModel
+			setSelector: self currentSelector
+			category: newCategory name.
+		self updateForNewMethod ]
 ]
 
 { #category : #accessing }
@@ -593,8 +620,7 @@ ReflectionUsesBrowser >> setNextButton [
 ReflectionUsesBrowser >> updateForNewMethod [
 
 	codePresenterContext label: self codePresenterLabelName.
-	categoryAndDescriptionPresenter category: self currentCategory;
-	description: self currentCategoryDescription.
+	categoryAndDescriptionPresenter category: self currentCategory.
 	self currentMethod ifNil: [ codePresenter text: '"There is no sender for the current selector. Please only assess the category of the selector."' ] ifNotNil: [ 
 		codePresenter
 			beForMethod: self currentMethod;
@@ -609,7 +635,7 @@ ReflectionUsesBrowser >> updateForNewMethod [
 		ifFalse: [ self setNextButton ].
 	reflectionUsesModel isCurrentMethodFirstMethod
 		ifTrue: [ backButton disable  ] ifFalse: [ backButton enable  ]. 
- 	currentResult isWellDefined ifTrue: [ nextButton enable  ] ifFalse: [ nextButton disable  ].
+ 	(currentResult isWellDefined and: [self currentCategory isNotEmpty ])ifTrue: [ nextButton enable  ] ifFalse: [ nextButton disable  ].
 ]
 
 { #category : #'loading and updating' }

@@ -7,6 +7,11 @@ Class {
 	#category : #ReflectionUses
 }
 
+{ #category : #adding }
+ReflectionUsesModelForQuestionsTestFromFiles >> addCategory: aCategory [ 
+	categoriesAndDescriptions at: aCategory name put: aCategory.
+]
+
 { #category : #initialization }
 ReflectionUsesModelForQuestionsTestFromFiles >> initialize [ 
 	super initialize.
@@ -16,11 +21,21 @@ ReflectionUsesModelForQuestionsTestFromFiles >> initialize [
 { #category : #initialization }
 ReflectionUsesModelForQuestionsTestFromFiles >> updateListOfSenders [
 
+	| senders |
 	listOfSenders := CollectionBidirectionalIterator on:
 		                 (currentSelector
 			                  ifNotNil: [ 
-				                  currentSelector senders size < n
-					                  ifFalse: [ currentSelector senders first: n ]
-					                  ifTrue: [ currentSelector senders ] ]
+				                  currentSelector = 'thisContext'
+					                  ifTrue: [ 
+						                  senders := Smalltalk globals allMethods 
+							                             select: [ :method | 
+							                             method readsThisContext ] ]
+					                  ifFalse: [ senders := currentSelector senders ].
+				                  senders := senders reject: [ :sender | 
+					                             sender methodClass package
+					                             = self class package ].
+				                  senders size < n
+					                  ifFalse: [ senders first: n ]
+					                  ifTrue: [ senders ] ]
 			                  ifNil: [ {  } ])
 ]

@@ -3,7 +3,6 @@ Class {
 	#superclass : #SpPresenter,
 	#instVars : [
 		'category',
-		'description',
 		'categoryLabel',
 		'namePresenter',
 		'descriptionPresenter'
@@ -15,13 +14,13 @@ Class {
 CategoryPresenter class >> example [
 
 	"This example opens a spec window with a label."
-	^ ( self new category: 'aCategory'; description: 'Lorem Ipsum blabla truc bidule'; asWindow ) initialExtent: 200@300; open.
+	^ ( self new category: ( Category new name: 'aCategory'; description: 'Lorem Ipsum blabla truc bidule'); asWindow ) initialExtent: 200@300; open.
 ]
 
 { #category : #accessing }
-CategoryPresenter >> category: aString [ 
-	category := aString.
-	namePresenter label: aString.
+CategoryPresenter >> category: aCategory [
+	category := aCategory.
+	self updateCategory.
 ]
 
 { #category : #accessing }
@@ -36,15 +35,15 @@ CategoryPresenter >> defaultLayout [
 ]
 
 { #category : #accessing }
-CategoryPresenter >> description: aString [ 
-	description := aString.
-	descriptionPresenter text: aString.
-]
-
-{ #category : #accessing }
 CategoryPresenter >> initializePresenters [
 
 	categoryLabel := SpLabelPresenter new label: 'Category : '.
 	namePresenter := SpLabelPresenter new label: ''.
 	descriptionPresenter := SpTextPresenter new text: ''; beNotEditable. 
+]
+
+{ #category : #accessing }
+CategoryPresenter >> updateCategory [
+	namePresenter label: category name.
+	descriptionPresenter text: category description
 ]
