@@ -9,8 +9,6 @@ Class {
 		'noJustifyButton',
 		'dontKnowJustifyButton',
 		'indirectUseCheckBox',
-		'yesFixButton',
-		'noFixButton',
 		'dontKnowFixButton',
 		'justifyButtons',
 		'fixButtons',
@@ -31,7 +29,10 @@ Class {
 		'packageableQuestionPresenter',
 		'packageableButtons',
 		'categoryAndDescriptionPresenter',
-		'changeCategoryButton'
+		'changeCategoryButton',
+		'removedFixButton',
+		'rewrittenEasyFixButton',
+		'rewrittenHardFixButton'
 	],
 	#category : #ReflectionUses
 }
@@ -293,7 +294,10 @@ ReflectionUsesBrowser >> codePresenterLabelName [
 ReflectionUsesBrowser >> connectPresenters [
 
 	browseButtonPresenter action: [ self currentMethod browse ].
-	changeCategoryButton action: [ self openSelectorCategoryMenu ].
+	changeCategoryButton action: [ 
+		currentResult comment: commentPresenter text.
+		reflectionUsesModel saveResult: currentResult.
+		self openSelectorCategoryMenu ].
 	justifyButtons do: [ :radioButton | 
 		radioButton whenChangedDo: [ 
 			currentResult justified: self currentJustifyAnswer.
@@ -363,8 +367,8 @@ ReflectionUsesBrowser >> currentPackageableAnswer [
 ReflectionUsesBrowser >> currentRemovabilityAnswer [
 
 	dontKnowFixButton isAnyButtonSelected ifFalse: [ ^ '' ].
-	dontKnowFixButton  state ifTrue: [ ^ 'unknown' ].
-	^ yesFixButton state 
+	fixButtons do: [ :button | 
+		button state ifTrue: [ ^ fixButtons keyAtValue: button ] ]
 ]
 
 { #category : #accessing }
@@ -430,7 +434,8 @@ ReflectionUsesBrowser >> initialize [
 ReflectionUsesBrowser >> initializePresenters [
 
 	browseButtonPresenter := SpButtonPresenter new label: 'Browse'.
-	changeCategoryButton := SpButtonPresenter new label: 'Change Category of this selector'.
+	changeCategoryButton := SpButtonPresenter new label:
+		                        'Change Category of this selector'.
 	categoryAndDescriptionPresenter := CategoryPresenter new.
 	codePresenterContext := SpLabelPresenter new label:
 		                        self codePresenterLabelName.
@@ -438,11 +443,11 @@ ReflectionUsesBrowser >> initializePresenters [
 		                 beNotEditable;
 		                 yourself.
 	selectorNamePresenter := SpLabelPresenter new displayBold: [ true ].
-	
+
 	testCheckbox := self newCheckBox
-		                       state: false;
-		                       label: 'This method is a test';
-		                       yourself.
+		                state: false;
+		                label: 'This method is a test';
+		                yourself.
 	justifyQuestionPresenter := SpLabelPresenter new label:
 		                            'Is this use of reflective operation justified ?'.
 	yesJustifyButton := self newRadioButton label: 'yes'.
@@ -457,34 +462,40 @@ ReflectionUsesBrowser >> initializePresenters [
 			                  (#dontknow -> dontKnowJustifyButton) }.
 
 	fixedEasilyQuestionPresenter := SpLabelPresenter new label:
-		                                'If it is not justify, this method should be'.
-	yesFixButton := self newRadioButton label: 'Removed'.
-	noFixButton := self newRadioButton label: 'Rewritten'.
+		                                'If it is not justify, this method should be ... :'.
+	removedFixButton := self newRadioButton label: 'Removed'.
+	rewrittenEasyFixButton := self newRadioButton label:
+		                          'Rewritten (easy)'.
+	rewrittenHardFixButton := self newRadioButton label:
+		                          'Rewritten (hard)'.
 	dontKnowFixButton := self newRadioButton label: 'I dont know'.
 	dontKnowFixButton associatedRadioButtons: { 
-			yesFixButton.
-			noFixButton }.
+			removedFixButton.
+			rewrittenEasyFixButton.
+			rewrittenHardFixButton }.
 	fixButtons := Dictionary newFrom: { 
-			              (#Removed -> yesFixButton).
-			              (#Rewritten -> noFixButton).
+			              (#Removed -> removedFixButton).
+			              (#RewrittenEasy -> rewrittenEasyFixButton).
+			              (#RewrittenHard -> rewrittenHardFixButton).
 			              (#dontknow -> dontKnowFixButton) }.
-			
+
 	packageableQuestionPresenter := SpLabelPresenter new label:
-		                                'Can it be packaged as an optional method ?'.
+		                                'This method can be packaged as optional? ( not necessary for production code)'.
 	yesPackageableButton := self newRadioButton label: 'yes'.
 	noPackageableButton := self newRadioButton label: 'no'.
 	dontKnowPackageableButton := self newRadioButton label: 'I dont know'.
 	dontKnowPackageableButton associatedRadioButtons: { 
 			yesPackageableButton.
-			noPackageableButton  }.
+			noPackageableButton }.
 	packageableButtons := Dictionary newFrom: { 
-			              (#yes -> yesPackageableButton ).
-			              (#no -> noPackageableButton ).
-			              (#dontknow -> dontKnowPackageableButton ) }.
-			
+			                      (#yes -> yesPackageableButton).
+			                      (#no -> noPackageableButton).
+			                      (#dontknow -> dontKnowPackageableButton) }.
+
 	indirectUseCheckBox := self newCheckBox
 		                       state: false;
-		                       label: 'Remember me for indirect uses - I am part of the extended MOP';
+		                       label:
+			                       'Remember me for indirect uses - I am part of the extended MOP';
 		                       yourself.
 
 	commentLabel := SpLabelPresenter new label: 'Comment'.
@@ -557,19 +568,19 @@ ReflectionUsesBrowser >> rightPanelLayout [
 		  expand: false;
 		  add: fixedEasilyQuestionPresenter expand: false;
 		  add: (SpBoxLayout newTopToBottom
-				   add: yesFixButton;
-				   add: noFixButton;
+				   add: removedFixButton;
+				   add: rewrittenEasyFixButton;
+				   add: rewrittenHardFixButton;
 				   add: dontKnowFixButton;
 				   yourself)
 		  expand: false;
 		  add: packageableQuestionPresenter expand: false;
-				  add: (SpBoxLayout newTopToBottom
+		  add: (SpBoxLayout newTopToBottom
 				   add: yesPackageableButton;
 				   add: noPackageableButton;
 				   add: dontKnowPackageableButton;
 				   yourself)
 		  expand: false;
-
 		  add: commentLabel expand: false;
 		  add: commentPresenter;
 		  add: (SpBoxLayout newLeftToRight
@@ -655,12 +666,13 @@ ReflectionUsesBrowser >> updatePresenterForCurrentResult [
 	currentResult removability  = ''
 		ifTrue: [ dontKnowFixButton deselectAllButtons ]
 		ifFalse: [ 
-			currentResult removability = 'unknown'
+			(fixButtons at: (currentResult removability)) state: true.
+			"currentResult removability = #dontknow
 				ifTrue: [ dontKnowFixButton state: true ]
 				ifFalse: [ 
 					currentResult removability
-						ifTrue: [ yesFixButton state: true ]
-						ifFalse: [ noFixButton state: true ] ] ].
+						ifTrue: [ removedFixButton state: true ]
+						ifFalse: [ rewrittenEasyFixButton state: true ] ]" ].
 	currentResult packageableOptionnally  = ''
 		ifTrue: [ dontKnowPackageableButton deselectAllButtons ]
 		ifFalse: [ 
