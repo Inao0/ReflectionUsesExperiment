@@ -22,3 +22,13 @@ SpRadioButtonPresenter >> isAnyButtonSelected [
 	associatedRadioButtons do: [ :e | e state ifTrue: [ ^ true ] ].
 	^ self state
 ]
+
+{ #category : #'*ReflectionUses' }
+SpRadioButtonPresenter >> selectedButtonInTheGroup [
+
+	"Set the state `aBoolean` of current radio button. 
+	 Changing the state affect other associated radio buttons by toggling also their state.
+	 See also `SpRadioButtonPresenter>>#associatedRadioButtons:`"
+   self state ifTrue: [ ^self ].
+	^ associatedRadioButtons detect: [ :e | e state].
+]

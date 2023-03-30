@@ -438,7 +438,8 @@ ReflectionUsesBrowser >> initializePresenters [
 		                        'Change Category of this selector'.
 	categoryAndDescriptionPresenter := CategoryPresenter new.
 	codePresenterContext := SpLabelPresenter new label:
-		                        self codePresenterLabelName.
+		                        self codePresenterLabelName;
+		displayBold: [ true ].
 	codePresenter := SpCodePresenter new
 		                 beNotEditable;
 		                 yourself.
