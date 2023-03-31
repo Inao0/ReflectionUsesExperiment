@@ -58,6 +58,22 @@ RUBrowser class >> exampleFromFile [
 		  open
 ]
 
+{ #category : #examples }
+RUBrowser class >> fromSelectors: selectorsFilePathString categories: categoriesFilePathString [
+
+	"This example opens a spec window with a label."
+
+	| model |
+	model := RUSendersList
+		         fromFileOfSelectors: selectorsFilePathString 
+		         withCategories: categoriesFilePathString.
+	^ (self new
+		   reflectionUsesModel: model;
+		   asWindow)
+		  initialExtent: 1200 @ 600;
+		  open
+]
+
 { #category : #'loading and updating' }
 RUBrowser >> aboutMethodLabel [
 
