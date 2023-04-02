@@ -111,7 +111,7 @@ RUBrowser >> connectPresenters [
 	justifyButtons do: [ :radioButton | 
 		radioButton whenChangedDo: [ 
 			currentResult justified: self currentJustifyAnswer.
-			(#( #yes #probablyYes #dontknow ) includes: currentResult justified)
+			(#( #yes #probablyYes #neutral ) includes: currentResult justified)
 				ifTrue: [ 
 					dontKnowFixButton deselectAllButtons.
 					fixButtons do: [ :fixRadioButton | fixRadioButton disable ] ]
@@ -291,7 +291,7 @@ RUBrowser >> initializePresenters [
 	justifyButtons := Dictionary newFrom: { 
 			                  (#yes -> yesJustifyButton).
 			                  (#probablyYes -> probablyYesJustifyButton).
-			                  (#dontknow -> dontKnowJustifyButton).
+			                  (#neutral -> dontKnowJustifyButton).
 			                  (#probablyNo -> probablyNoJustifyButton).
 			                  (#no -> noJustifyButton) }.
 
