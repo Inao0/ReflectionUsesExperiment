@@ -476,7 +476,7 @@ RUSelectorListGenerator >> fewSenders [
 { #category : #'as yet unclassified' }
 RUSelectorListGenerator >> fillUniqueSenders [
 
-	| numberOfMissingSelectors individualLists senderSelection oldSize nbAlreadyUsedByPackage oldSenderSelectionSize remainingSenders counter |
+	| numberOfMissingSelectors individualLists senderSelection oldSize nbAlreadyUsedByPackage oldSenderSelectionSize remainingSenders counter failCounter oldSumOfAllSelectors |
 	(nbApparitionDict sum: [ :each | each value ])
 	= (sendersAlreadySelected sum: [ :sel | sel value size ]) ifFalse: [ 
 		self error: 'apparitions are miscalculated' ].
@@ -517,7 +517,7 @@ RUSelectorListGenerator >> fillUniqueSenders [
 				                            e key ]) intersection: each value)
 				                          size ].
 	"Make sure all packages are featured 5 times if possible."
-	5 timesRepeat: [ 
+	3 timesRepeat: [ 
 		(nbAlreadyUsedByPackage select: [ :e | e value < 6 ]) do: [ :pack | 
 			| senders sender |
 			senders := groupedByPackages at: pack key.
@@ -536,11 +536,16 @@ RUSelectorListGenerator >> fillUniqueSenders [
 		self error: 'apparitions are miscalculated' ].
 
 
+	1 halt.
 	numberOfMissingSelectors := numberOfPeople * numberOfSendersPerList
+	                            - (groupLists sum: [ :each | 
+			                             each sum: [ :senders | 
+				                             senders sum: [ :sender | 
+					                             sender value size ] ] ])
 	                            -
-	                            (groupLists sum: [ :each | 
-		                             each sum: [ :i | i size ] ])
-	                            - senderSelection size.
+	                            (senderSelection sum: [ :each | 
+		                             each value size ]).
+
 	remainingSenders := ((senderAssociation associations difference:
 		                      sendersAlreadySelected) difference:
 		                     senderSelection) asOrderedCollection.
@@ -553,16 +558,31 @@ RUSelectorListGenerator >> fillUniqueSenders [
 		sendersAlreadySelected add: sender.
 		sender value do: [ :sel | self incremmentAppartitionFor: sel ] ].
 
-	senderSelection sorted: [ :a :b | a value size < b value size ].
 
 	counter := 0.
+	failCounter := 0.
+	oldSumOfAllSelectors := 0.
 	(0 to: senderSelection size - 1) do: [ :i | 
 		[ 
-		(individualLists at: 1 + (counter \\ numberOfPeople)) size
-		< numberOfSendersPerList ] whileFalse: [ counter := counter + 1 ].
+		((individualLists at: 1 + (counter \\ numberOfPeople)) sum: [ :each | 
+			 each value size ]) + (senderSelection at: i + 1) value size
+		<= numberOfSendersPerList or: [ failCounter > (numberOfPeople + 1)] ] 
+			whileFalse: [ 
+				counter := counter + 1.
+				failCounter := failCounter + 1.
+				1 haltIf: [ failCounter > 100] ].
+			(((individualLists at: 1 + (counter \\ numberOfPeople)) sum: [ :each | 
+			 each value size ]) + (senderSelection at: i + 1) value size
+		<= numberOfSendersPerList) ifTrue:  [  
 		(individualLists at: 1 + (counter \\ numberOfPeople)) add:
-			(senderSelection at: i + 1).
-		counter := counter + 1. ].
+			(senderSelection at: i + 1).].
+		counter := counter + 1. 
+		oldSumOfAllSelectors :=  groupLists sum: [ :senders | senders sum: [ :sender | sender value size]].
+		failCounter := 0. ].
+	counter >= 100000 ifTrue: [ 
+		self error: 'Previous loop did not go well' ].
+
+	1 halt.
 
 	(nbApparitionDict sum: [ :each | each value ])
 	= (sendersAlreadySelected sum: [ :sel | sel value size ]) ifFalse: [ 
@@ -689,7 +709,7 @@ RUSelectorListGenerator >> initialize [
 	selectors := self class defaultSelectors.
 	sizeOfGroups := 5.
 	numberOfPeople := 35.
-	numberOfSendersPerList := 75.
+	numberOfSendersPerList := 100.
 	numberOfCommonSenders := 30.
 	numberOfNoSenders := 6.
 	
