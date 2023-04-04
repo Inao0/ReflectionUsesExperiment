@@ -42,17 +42,22 @@ CategoriesPresenter >> category: aCategory [
 { #category : #accessing }
 CategoriesPresenter >> categoryList: aCategoryList [
 
-	"Adding empty category / subcategories to be able to have 'empty' selection in the droplist"
+	"Adding empty category / subcategories to be able to have 'empty' selection in the droplist. Add a 'None/I don't know' "
 
 	categoryList := aCategoryList asOrderedCollection
 		                add: Category new;
+		                add: (Category new
+				                 name: 'None';
+				                 description:
+					                 'Choose this if none of the categories fit, or if you don''t know. Please use the comment to detail why. ';
+				                 yourself);
 		                yourself.
 	categoryList do: [ :cat | 
 		cat addChild: nil -> (Category new
 				 parent: cat;
-				 yourself).].
+				 yourself) ].
 	categoryList sort: [ :a :b | a name < b name ].
-	catPresenter items: categoryList.
+	catPresenter items: categoryList
 ]
 
 { #category : #accessing }
