@@ -28,7 +28,6 @@ Class {
 		'dontKnowPackageableButton',
 		'packageableQuestionPresenter',
 		'packageableButtons',
-		'categoryAndDescriptionPresenter',
 		'removedFixButton',
 		'rewrittenEasyFixButton',
 		'rewrittenHardFixButton',
@@ -94,14 +93,10 @@ RUBrowser >> codePresenterLabelName [
 RUBrowser >> connectPresenters [
 
 	browseButtonPresenter action: [ self currentMethod browse ].
-	categoryAndDescriptionPresenter := CategoriesPresenter new.
 	"changeCategoryButton action: [ 
 		currentResult comment: commentPresenter text.
 		reflectionUsesModel saveResult: currentResult.
 		self openSelectorCategoryMenu ]."
-	categoryAndDescriptionPresenter whenSelectedItemChangedDo: [ :cat | 
-		currentResult ifNotNil: [ currentResult category: self currentCategory].
-		self updateNextButton ].
 	falsePositiveCheckBox whenChangedDo: [ 
 		currentResult falsePositive: falsePositiveCheckBox state.
 		falsePositiveCheckBox state
@@ -143,12 +138,6 @@ RUBrowser >> connectPresenters [
 		reflectionUsesModel saveResult: currentResult.
 		reflectionUsesModel previous.
 		self updateForNewMethod ]
-]
-
-{ #category : #accessing }
-RUBrowser >> currentCategory [
-
-	^ categoryAndDescriptionPresenter category 
 ]
 
 { #category : #querying }
@@ -204,7 +193,6 @@ RUBrowser >> defaultLayout [
 RUBrowser >> defaultResult [
 
 	^ RUResult new
-		  category: nil;
 		  senderMethod: self currentMethod;
 		  targetSelector: self currentSelector;
 		  justified: '';
@@ -228,8 +216,9 @@ RUBrowser >> disableAllButtons [
 RUBrowser >> enableAllButtons [
 
 	indirectUseCheckBox enable.
-	fixButtons do: [ :e | e enable ].
 	justifyButtons do: [ :e | e enable ].
+	(self currentJustifyAnswer = #probablyNo or: [self currentJustifyAnswer = #no]) ifFalse: 
+	[fixButtons do: [ :e | e enable ]].
 	packageableButtons do: [ :e | e enable ]
 ]
 
@@ -262,10 +251,8 @@ RUBrowser >> initialize [
 RUBrowser >> initializePresenters [
 
 	browseButtonPresenter := SpButtonPresenter new label: 'Browse'.
-	categoryAndDescriptionPresenter := CategoriesPresenter new.
 	"changeCategoryButton := SpButtonPresenter new label:
 		                        'Change Category of this selector'."
-	categoryAndDescriptionPresenter := CategoryPresenter new.
 	codePresenterContext := SpLabelPresenter new
 		                        label: self codePresenterLabelName;
 		                        displayBold: [ true ].
@@ -386,7 +373,6 @@ RUBrowser >> reflectionUsesModel [
 RUBrowser >> reflectionUsesModel: anObject [
 
 	reflectionUsesModel := anObject.
-	categoryAndDescriptionPresenter categoryList: anObject categories.
 	self updateForNewMethod.
 ]
 
@@ -395,8 +381,8 @@ RUBrowser >> rightPanelLayout [
 
 	^ SpBoxLayout newTopToBottom
 		  add: selectorNamePresenter expand: false;
-		  add: categoryAndDescriptionPresenter;
-		  add: aboutSenderMethodPresenter expand: false;
+		  "add: categoryAndDescriptionPresenter;"
+		  "add: aboutSenderMethodPresenter expand: false;"
 		  add: falsePositiveCheckBox expand: false;
 		  add: indirectUseCheckBox expand: false;
 		  add: justifyQuestionPresenter expand: false;
@@ -514,9 +500,13 @@ RUBrowser >> updatePresenterForCurrentResult [
 		ifTrue: [ dontKnowJustifyButton deselectAllButtons ]
 		ifFalse: [ (justifyButtons at: currentResult justified) state: true ].
 	falsePositiveCheckBox state: currentResult falsePositive.
-	(currentResult falsePositive or: [currentResult senderMethod isNil]) ifTrue: [ self disableAllButtons ] ifFalse: [ self enableAllButtons ].
+	(currentResult falsePositive or: [ currentResult senderMethod isNil ])
+		ifTrue: [ self disableAllButtons ]
+		ifFalse: [ self enableAllButtons ].
 	indirectUseCheckBox state: currentResult indirectUse.
-	categoryAndDescriptionPresenter category: currentResult category.
+	(self currentJustifyAnswer = #probablyNo or: [ 
+		 self currentJustifyAnswer = #no ]) ifFalse: [ 
+		fixButtons do: [ :e | e disable ] ].
 	currentResult removability = ''
 		ifTrue: [ dontKnowFixButton deselectAllButtons ]
 		ifFalse: [ 

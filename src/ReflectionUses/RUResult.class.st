@@ -4,7 +4,6 @@ Class {
 	#instVars : [
 		'senderMethod',
 		'targetSelector',
-		'category',
 		'justified',
 		'indirectUse',
 		'comment',
@@ -14,18 +13,6 @@ Class {
 	],
 	#category : #ReflectionUses
 }
-
-{ #category : #accessing }
-RUResult >> category [
-
-	^ category
-]
-
-{ #category : #accessing }
-RUResult >> category: anObject [
-
-	category := anObject
-]
 
 { #category : #accessing }
 RUResult >> comment [
@@ -66,8 +53,6 @@ RUResult >> indirectUse: anObject [
 { #category : #accessing }
 RUResult >> isWellDefined [
 
-	"La catégorie doit être définie et non vide"
-	(category isNil or: [ category isEmpty ]) ifTrue: [ ^false ].
 	"If False positive and category -> okay"
 	falsePositive ifTrue: [^ true].
 	"Si la catégorie est complétée, mais qu'il n'y a pas de sender"

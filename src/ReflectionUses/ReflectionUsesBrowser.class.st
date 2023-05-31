@@ -301,7 +301,7 @@ ReflectionUsesBrowser >> connectPresenters [
 	justifyButtons do: [ :radioButton | 
 		radioButton whenChangedDo: [ 
 			currentResult justified: self currentJustifyAnswer.
-			(currentResult isWellDefined and: [self currentCategory isNotEmpty])
+			(currentResult isWellDefined)
 				ifTrue: [ nextButton enable ]
 				ifFalse: [ nextButton disable ].
 			(currentResult justified ~= false) ifTrue: [ dontKnowFixButton deselectAllButtons. fixButtons do: [ :fixRadioButton | fixRadioButton disable ] ] ifFalse: [ fixButtons do: [ :fixRadioButton | fixRadioButton enable ] ].
@@ -309,13 +309,13 @@ ReflectionUsesBrowser >> connectPresenters [
 	fixButtons do: [ :radioButton | 
 		radioButton whenChangedDo: [ 
 			currentResult removability: self currentRemovabilityAnswer.
-			(currentResult isWellDefined and: [self currentCategory isNotEmpty])
+			(currentResult isWellDefined)
 				ifTrue: [ nextButton enable ]
 				ifFalse: [ nextButton disable ] ] ].
 	packageableButtons do: [ :radioButton | 
 		radioButton whenChangedDo: [ 
 			currentResult packageableOptionnally: self currentPackageableAnswer.
-			(currentResult isWellDefined and: [self currentCategory isNotEmpty])
+			(currentResult isWellDefined)
 				ifTrue: [ nextButton enable ]
 				ifFalse: [ nextButton disable ] ] ].
 	commentPresenter whenSubmitDo: [ :arg | currentResult comment: arg ].

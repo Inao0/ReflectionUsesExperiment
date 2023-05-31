@@ -101,16 +101,16 @@ RUSendersList >> export [
 			| writer |
 			writer := NeoCSVWriter on: stream.
 			writer writeHeader:
-				{ 'Selector'. 'Category'. 'Subcategory'. 'Description'. 'Method'. 'Package'.
+				{ 'Selector'. "'Category'. 'Subcategory'. 'Description'." 'Method'. 'Package'.
 				'isFalsePositive'. 'Justify'. 'Removable'. 'IndirectUses'. 'Packageable' .
 				'Comment' }.
 			ResultDictionary valuesDo:  [ :dict | 
 				dict valuesDo: [ :each | 
 					writer nextPut: { 
 							each targetSelector.
-							each category parent ifNil: [ each category name ] ifNotNil: [ each category parent name ] .
+							"each category parent ifNil: [ each category name ] ifNotNil: [ each category parent name ] .
 							each category parent ifNil: [''] ifNotNil: [ each category name ] .
-							each category description.
+							each category description."
 							
 							(each senderMethod
 								 ifNotNil: [ each senderMethod name ]
