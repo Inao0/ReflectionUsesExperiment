@@ -1,5 +1,5 @@
 Class {
-	#name : 'SendersGraph',
+	#name : 'SendersGraphByCategories',
 	#superclass : 'RSAbstractContainerBuilder',
 	#instVars : [
 		'methods',
@@ -9,7 +9,8 @@ Class {
 		'selectors',
 		'categories',
 		'colorBlock',
-		'primitiveSelectors'
+		'primitiveSelectors',
+		'currentCategory'
 	],
 	#classInstVars : [
 		'dependenciesMap'
@@ -19,7 +20,7 @@ Class {
 }
 
 { #category : 'as yet unclassified' }
-SendersGraph class >> computeDependenciesOf: methods [
+SendersGraphByCategories class >> computeDependenciesOf: methods [
 	| map methodsSelectors stepStops |
 	map := Dictionary new.
 	stepStops := 20.
@@ -33,29 +34,29 @@ SendersGraph class >> computeDependenciesOf: methods [
 ]
 
 { #category : 'as yet unclassified' }
-SendersGraph class >> dependenciesMapFor: methods [
+SendersGraphByCategories class >> dependenciesMapFor: methods [
 	^ dependenciesMap ifNil: [ dependenciesMap := self computeDependenciesOf: methods ]
 
 ]
 
 { #category : 'initialization' }
-SendersGraph class >> resetDependenciesMap [
+SendersGraphByCategories class >> resetDependenciesMap [
 	<script: 'self resetDependenciesMap'>
 	dependenciesMap := nil
 ]
 
 { #category : 'hooks' }
-SendersGraph >> coloredByCategories [
+SendersGraphByCategories >> coloredByCategories [
 	categories := (methods collect: [ :each | (each pragmaAt: #reflection:) argumentAt: 1 ]) asSet.
 	colorPalette := NSScale category40.
 	categories do: [ :each | colorPalette scale: categories ].
 	colorBlock :=  [ :selector | |selCategories|
 		selCategories := (methods select: [ :each | each selector = selector ] thenCollect: [ :each | (each pragmaAt: #reflection:) argumentAt: 1 ]) asSet.
-		selCategories size = 1 ifTrue: [ colorPalette scale: selCategories asOrderedCollection first ] ifFalse: [ Color black ] ]
+		(selCategories size = 1) ifTrue: [ (selCategories asOrderedCollection first ~= currentCategory key) ifTrue:  [colorPalette scale: selCategories asOrderedCollection first] ifFalse: [ Color black ]  ] ifFalse: [ Color gray ] ]
 ]
 
 { #category : 'hooks' }
-SendersGraph >> coloredByClasses [
+SendersGraphByCategories >> coloredByClasses [
 
 	knownClasses := {
 		                Object.
@@ -72,7 +73,7 @@ SendersGraph >> coloredByClasses [
 ]
 
 { #category : 'as yet unclassified' }
-SendersGraph >> coloredByRoots [
+SendersGraphByCategories >> coloredByRoots [
 
 	| roots pointedTo pointedToBy colorDict allNodes newNodes previousNodes |
 	pointedTo := ((map keys intersection: selectors) flatCollect: [ :each |
@@ -115,7 +116,19 @@ SendersGraph >> coloredByRoots [
 ]
 
 { #category : 'hooks' }
-SendersGraph >> computeGroupFor: currentNode in: group for: nodesCopy [
+SendersGraphByCategories >> coloredGrayScaledByCategories [
+"Black : part of the current cat, grey part of current cat and at least another one, light grey other categories"
+	categories := (methods collect: [ :each | (each pragmaAt: #reflection:) argumentAt: 1 ]) asSet.
+	colorBlock :=  [ :selector | |selCategories|
+		selCategories := (methods select: [ :each | each selector = selector ] thenCollect: [ :each | (each pragmaAt: #reflection:) argumentAt: 1 ]) asSet.
+		(selCategories includes: currentCategory key) ifFalse: [ Color lightGray lighter ] ifTrue: [  
+		(selCategories size = 1) ifTrue: [Color black] ifFalse: [ Color gray ]]]
+	
+
+]
+
+{ #category : 'hooks' }
+SendersGraphByCategories >> computeGroupFor: currentNode in: group for: nodesCopy [
 
 	| oldSize |
 	group add: currentNode.
@@ -128,7 +141,7 @@ SendersGraph >> computeGroupFor: currentNode in: group for: nodesCopy [
 ]
 
 { #category : 'hooks' }
-SendersGraph >> computeGroups: aGroupOfShapes [
+SendersGraphByCategories >> computeGroups: aGroupOfShapes [
 	| nodesCopy groups |
 	nodesCopy := aGroupOfShapes copy.
 	groups := OrderedCollection new.
@@ -146,7 +159,7 @@ SendersGraph >> computeGroups: aGroupOfShapes [
 ]
 
 { #category : 'hooks' }
-SendersGraph >> export [
+SendersGraphByCategories >> export [
 
 	<script: 'self new export'>
 	| maxNumberOfReflectiveSenders |
@@ -283,7 +296,7 @@ SendersGraph >> export [
 ]
 
 { #category : 'hooks' }
-SendersGraph >> layout: aGroupOfShapes [
+SendersGraphByCategories >> layout: aGroupOfShapes [
 	| groups |
 	RSGraphvizLayout digraph
 		scale: -50;
@@ -292,8 +305,8 @@ SendersGraph >> layout: aGroupOfShapes [
 	groups := groups collect: [ :each | RSGroup withAll: each ].
 	groups sort: [ :a :b | a size > b size ].
 	
-	groups do: [ :group | group size = 1 ifTrue: [ group do: #remove ] ].
-	groups := groups reject: [ :group | group size = 1 ].
+	"groups do: [ :group | group size = 1 ifTrue: [ group do: #remove ] ]."
+	"groups := groups reject: [ :group | group size = 1 ]."
 	
 	RSFlowLayout new
 		gapSize: 50;
@@ -302,7 +315,8 @@ SendersGraph >> layout: aGroupOfShapes [
 	"EXPERIMENTAL"
 	groups do: [ :group | | box |
 		box := RSBox new fromRectangle: group encompassingRectangle.
-		box color: Color veryVeryLightGray.
+		"box color: Color veryVeryLightGray lighter."
+		box color: Color white.
 		box extent: box extent + 10.
 		container add: box.
 		box pushBack.
@@ -310,19 +324,19 @@ SendersGraph >> layout: aGroupOfShapes [
 ]
 
 { #category : 'accessing' }
-SendersGraph >> map [
+SendersGraphByCategories >> map [
 
 	^ map
 ]
 
 { #category : 'accessing' }
-SendersGraph >> map: anObject [
+SendersGraphByCategories >> map: anObject [
 
 	map := anObject
 ]
 
 { #category : 'hooks' }
-SendersGraph >> renderIn: canvas [
+SendersGraphByCategories >> renderIn: canvas [
 
 	| arrow |
 	shapes := RSLabel models: selectors.
@@ -331,7 +345,7 @@ SendersGraph >> renderIn: canvas [
 			fontFamily: 'Gill Sans';
 			fontSize: 12;
 		 	color: (colorBlock value: label model)].
-	shapes select: [ :each | primitiveSelectors includes: each model  ] thenDo: [:each | each bold ].
+	"shapes select: [ :each | primitiveSelectors includes: each model  ] thenDo: [:each | each bold ]."
 	shapes
 		when: RSMouseDoubleClick
 		do: [ :evt |
@@ -351,10 +365,10 @@ SendersGraph >> renderIn: canvas [
 		connectToAll: [ :selector | map at: selector ].
 	self layout: shapes.
 	canvas addInteraction: RSCanvasController new.
-	canvas shapes select: [ :each | primitiveSelectors includes: each model ] thenDo: [ :each |
+	"canvas shapes select: [ :each | primitiveSelectors includes: each model ] thenDo: [ :each |
 		|from to|
-		"each @ RSShadowInteraction."
-		"from := each color.
+		each @ RSShadowInteraction.
+		from := each color.
 		to := each color alpha: 0.
 		canvas newAnimation
 			repeat;
@@ -365,11 +379,11 @@ SendersGraph >> renderIn: canvas [
 		onStepDo: [:t |
 			each color: (from interpolateTo: to at: t).
 			canvas signalUpdate.
-			]." ]
+			]. ]"
 ]
 
 { #category : 'hooks' }
-SendersGraph >> renderInAsTree: canvas [
+SendersGraphByCategories >> renderInAsTree: canvas [
 	 
 	| arrow |
 	shapes := RSLabel models: selectors.
@@ -394,142 +408,70 @@ SendersGraph >> renderInAsTree: canvas [
 ]
 
 { #category : 'hooks' }
-SendersGraph >> run [
+SendersGraphByCategories >> run [
 
 	<script: 'self new run'>
-	self coloredByClasses.
-	self
-		selectors:
-			{ #className. #classSide. #instanceSide. #isClassSide. #isInstanceSide.
-			#isMetaclassOfClassOrNil. #hasClassSide. #isClass. #isMeta. #subclasses.
-			#obsoleteSubclasses. #hasSubclasses. #subclassesDo:. #superclass.
-			#allSubclasses. #allSuperclasses. #allSuperclassesIncluding:.
-			#allSuperclasses. #allSubclassesWithLevelDo:startingLevel:.
-			#allSubclassesDo:. #allSuperclassesDo:. #withAllSubclasses.
-			#withAllSubclassesDo:. #withAllSuperclasses. #withAllSuperclassesDo:.
-			#withAllSuperAndSubclasses. #withAllSubAndSuperclassesDo:.
-			#isKindOf:. #isMemberOf:. #kindOfSubclass. #commonSuperclassWith:.
-			#whichSuperclassSatisfies:. #inheritsFrom:. #includesBehavior:.
-			#isRootInEnvironment. #selectSuperclasses:. #selectSubclasses:.
-			#instVarNames. #instanceVariableNamesDo:. #allInstVarNames.
-			#hasInstVarNamed:. #definedVariables. #allInstVarNamesEverywhere.
-			#classThatDefinesInstVarNamed:. #whichClassDefinesInstVar:.
-			#instSize. #basicSize. #instVarIndexFor:. #instVarIndexFor:ifAbsent:.
-			#classVariables. #classVarNames. #allClassVarNames.
-			#hasClassVarNamed:. #classVariableNamed:ifAbsent:.
-			#hasClassVariable:. #definesClassVariableNamed:.
-			#definesClassVariable:. #readClassVariableNamed:.
-			#classThatDefinesClassVariable:. #whichClassDefinesClassVar:.
-			#usesClassVarNamed:. #sharedPools. #sharedPoolNames.
-			#allSharedPools. #hasSharedPools. #sharedPoolOfVarNamed:.
-			#sharedPoolsDo:. #classPool. #usesLocalPoolVarNamed:.
-			#usesPoolVarNamed:. #includesSharedPoolNamed:.
-			#instanceVariables. #slots. #localSlots. #allSlots. #slotNames.
-			#hasSlotNamed:. #slotNamed:. #slotNamed:ifFound:.
-			#slotNamed:ifFound:ifNone:. #readSlot:. #readSlotNamed:.
-			#definesSlot:. #definesSlotNamed:. #classBindingOf:.
-			#bindingOf:. #lookupVar:. #lookupVar:declare:. #lookupVarForDeclaration:.
-			#hasMethods. #hasAbstractMethods. #respondsTo:. #classesThatImplementAllOf:.
-			#allInstances. #allInstancesOrNil. #allInstancesDo:.
-			#allSubInstancesDo:. #allSubInstances. #pragmasDo:. #pragmas.
-			#isAnonymous. #isClassOrTrait. #isUsed. #isObsolete. #includesSelector:.
-			#includesLocalSelector:. #isDisabledSelector:. #isLocalSelector.
-			#selectors. #selectorsDo:. #selectorsWithArgs:. #methods. #methodNamed:.
-			#includesMethod:. #methodsDo:. #selectorsAndMethodsDo:.
-			#subclasses:. #superclass:. #basicSuperclass:. #addSubclass:.
-			#removeSubclass:. #addObsoleteSubclass:. #removeAllObsoleteSubclasses.
-			#addInstVarNamed:. #removeInstVarNamed:. #addClassVariable:.
-			#addClassVarNamed:. #removeClassVariable:. #removeClassVarNamed:.
-			#removeClassVarNamed:interactive:. #sharedPools:. #addSharedPool:.
-			#addSharedPoolNamed:. #removeSharedPool:. #classPool:. #addSlot:.
-			#removeSlot:. #addClassSlot:. #removeClassSlot:. #removeSelector:.
-			#removeSelectorSilently:. #addSelectorSilently:withMethod:.
-			#addSelector:withMethod:. #addSelector:withRecompiledMethod:.
-			#whichClassIncludesSelector:. #classesThatImplementAllOf:.
-			#classBuilder. #classInstaller. #newSubclass. #newAnonymousSubclass.
-			#subclass:. #writeClassVariableNamed:value:.
-			#writeSlot:value:. #writeSlotNamed:value:. #objectClass:.
-			#objectSize:. #instVarAt:. #instVarNamed:. #instVarNames.
-			#instVarsInclude:. #instanceVariables. #object:basicAt:.
-			#object:eqeq:. #object:instVarAt:. #instVarAt:put:. #instVarNamed:put:.
-			#object:basicAt:put:. #object:instVarAt:put:. #adoptInstance:.
-			#adoptInstance:from:. #instVarMappingFrom:. #primitiveChangeClassTo:.
-			#perform:. #perform:orSendTo:. #perform:with:. #perform:with:with:.
-			#perform:with:with:with:. #perform:with:with:with:with:.
-			#perform:withArguments:. #perform:withArguments:inSuperclass:.
-			#perform:withEnoughArguments:. #object:perform:withArguments:inClass:.
-			#in:. #withArgs:executeMethod:. #tryPrimitive:withArgs:.
-			#valueWithReceiver:arguments:. #executeMethod:. #receiver:withArguments:executeMethod:.
-			#pointersTo. #pointersToAmong:. #pointersToExcept:.
-			#pointersToExcept:among:. #pointsOnlyWeaklyTo:. #pointsTo:.
-			#become:. #becomeForward:. #becomeForward:copyHash:.
-			#someInstance. #someObject. #nextInstance. #nextObject. #setFormat:.
-			#format. #basicIdentityHash. #identityHash. #becomeForward:copyHash:.
-			#allMethodsAccessingSlot:. #allMethodsReadingSlot:.
-			#allMethodsWritingSlot:. #methodsAccessingSlot:.
-			#methodsReadingSlot:. #methodsWritingSlot:. #hasMethodAccessingVariable:.
-			#usingMethods. #whichMethodsReferTo:. #whichSelectorsReferTo:.
-			#thoroughHasSelectorReferringTo:. #thoroughWhichMethodsReferTo:.
-			#thoroughWhichMethodsReferTo:specialIndex:.
-			#thoroughWhichSelectorsReferTo:. #usingMethods. #hasSelectorReferringTo:.
-			#usingMethods. #lookupSelector:. #canPerform:. #canUnderstand:.
-			#cannotInterpret:. #doesNotUnderstand:. #compile:classified:.
-			#compile:classified:notifying:. #compile:classified:withStamp:notifying:.
-			#compile:classified:withStamp:notifying:logSource:.
-			#compile:notifying:. #compileAll. #compileAllFrom:. #compileSilently:.
-			#compileSilently:classified:. #compileSilently:classified:notifying:.
-			#compiledMethodAt:. #compiledMethodAt:ifAbsent:.
-			#compiledMethodAt:ifPresent:. #compiledMethodAt:ifPresent:ifAbsent:.
-			#compiler. #compilerClass. #selector. #sender. #activeOuterContext.
-			#arguments. #method. #methodNode. #outerContext. #outerMostContext.
-			#receiver. #tempAt:. #tempAt:put:. #top. #stepUntilSomethingOnStack.
-			#runUntilErrorOrReturnFrom:. #resume:through:. #activateMethod:withArgs:receiver:class:.
-			#terminate. #send:to:with:lookupIn:. #resumeEvaluating:.
-			#jump. #terminateTo:. #send:to:with:super:. #return. #pop. #shortDebugStack.
-			#return:. #push:. #step. #return:from:. #resume. #stepToCallee.
-			#return:through:. #resume:. #isValid. #arguments. #numArgs. #collectArguments:.
-			#receiver. #selector. #message. #arguments:. #receiver:. #selector:.
-			#argument. #arguments. #hasArguments. #numArgs. #selector. #lookupClass.
-			#argument:. #lookupClass:. #setSelector:. #setSelector:arguments:.
-			#asSendTo:. #sends:. #sentTo:. #sendTo: } asSet;
-		open
+	| selectorsCategories methodsSelectors |
+	methods := SystemNavigation new methods select: [ :m |
+		           m hasPragmaNamed: #reflection: ].
+	methodsSelectors := methods collect: [ :each | each selector ].
+	categories := methods groupedBy: [ :each |
+		              (each pragmaAt: #reflection:) argumentAt: 1 ].
+	selectorsCategories := ((categories flatCollectAsSet: [ :each |
+		                         each value collect: #selector ]) collect: [
+		                        :eachSelector |
+		                        eachSelector
+		                        -> (categories select: [ :each |
+				                         each anySatisfy: [ :method |
+					                         method selector = eachSelector ] ]) keys ])
+		                       asDictionary.
+	map := self class dependenciesMapFor: methods.
+	categories associationsDo: [ :eachCategory |
+		currentCategory := eachCategory.
+		container := self defaultContainer.
+		selectors := (currentCategory value flatCollect: [ :each |
+			              | coll |
+			              coll := { each selector } asOrderedCollection.
+			              coll addAll:
+				              (each messages intersection: methodsSelectors).
+			              coll ]) asSet.
+		self coloredGrayScaledByCategories.
+		self build.
+		self canvas zoomToFit.
+		self canvas pdfExporter exportToFile: ('GreySubgraph-',eachCategory key, '.pdf') asFileReference.
+		"self canvas open." ]
 ]
 
 { #category : 'hooks' }
-SendersGraph >> runWithRemovingMostUsed [
-	"The point of removing is clearing the most used ones to make the graph more readable"
+SendersGraphByCategories >> runFirstCategory [
 
-	<script: 'self new runWithRemovingMostUsed'>
-	| maxNumberOfReflectiveSenders attractors|
-	maxNumberOfReflectiveSenders := 7.
+	<script: 'self new runFirstCategory '>
+	
+	| selectorsCategories methodsSelectors|
+
 	methods := SystemNavigation new methods select: [ :m |
 		           m hasPragmaNamed: #reflection: ].
-	primitiveSelectors := (methods select: [ :each | each hasPragmaNamed: #primitive: ] thenCollect: #selector ) asSet.
+	methodsSelectors := methods collect: [ :each | each selector ].
+	categories := methods groupedBy: [ :each |
+		              (each pragmaAt: #reflection:) argumentAt: 1 ].
+	selectorsCategories := ((categories flatCollectAsSet: [ :each |
+		                         each value collect: #selector ]) collect: [
+		                        :eachSelector |
+		                        eachSelector
+		                        -> (categories select: [ :each |
+				                         each anySatisfy: [ :method |
+					                         method selector = eachSelector ] ]) keys ])
+		                       asDictionary.		
 	map := self class dependenciesMapFor: methods.
-	selectors := map keys reject: [:each | (map at: each ) size > maxNumberOfReflectiveSenders ].
-	self coloredByCategories.
+	currentCategory := categories associations first.
+	selectors := (currentCategory value flatCollect: [ :each | |coll| coll := {each selector}asOrderedCollection. coll  addAll: (each messages intersection: methodsSelectors). coll  ] )asSet.
+	self coloredGrayScaledByCategories.
 	self open.
-	attractors := map keys select: [:each | (map at: each ) size > maxNumberOfReflectiveSenders ]..
+	"attractors := map keys select: [:each | (map at: each ) size > maxNumberOfReflectiveSenders ].."
 	self halt
 ]
 
-{ #category : 'hooks' }
-SendersGraph >> runWithRemovingMostUsedColoredByRoots [
-	"The point of removing is clearing the most used ones to make the graph more readable"
-
-	<script: 'self new runWithRemovingMostUsedColoredByRoots'>
-	| maxNumberOfReflectiveSenders |
-	maxNumberOfReflectiveSenders := 7.
-	methods := SystemNavigation new allMethodsSelect: [ :m |
-		           m hasPragmaNamed: #reflection: ].
-	primitiveSelectors := (methods select: [ :each | each hasPragmaNamed: #primitive: ] thenCollect: #selector ) asSet.
-	map := self class dependenciesMapFor: methods.
-	selectors := map keys reject: [:each | (map at: each ) size > maxNumberOfReflectiveSenders ].
-	self coloredByRoots.
-	self open.
-]
-
 { #category : 'accessing' }
-SendersGraph >> selectors: aCollection [ 
+SendersGraphByCategories >> selectors: aCollection [ 
 	selectors := aCollection 
 ]
