@@ -292,6 +292,28 @@ CategoriesGraph >> export [
 	self canvas pdfExporter export
 ]
 
+{ #category : 'as yet unclassified' }
+CategoriesGraph >> exportForVisNetwork [
+	|nodesString edgesString startingNodesStringSize startingEdgesStringSize|
+	nodesString := 'nodes =  new vis.DataSet(['. 
+	edgesString := 'edges = new vis.DataSet(['.
+	startingNodesStringSize := nodesString size.
+	startingEdgesStringSize := edgesString size.
+	categoriesRelationships keysAndValuesDo: [ :cat :dependingCats | |superCat subCat|
+		(nodesString size = startingNodesStringSize) ifFalse: [ nodesString := nodesString , ',' ].
+		superCat := (cat key splitOn: $-) first.
+		subCat := (cat key splitOn: $-) last.
+		nodesString := nodesString , '{id: "',cat key, '" ,label: "', subCat, '" , group: "', superCat, '" , value: ', cat value size asString, ' }'.
+		dependingCats  keysAndValuesDo: [ :dependingCat :relations |
+			(edgesString size = startingEdgesStringSize) ifFalse: [ edgesString := edgesString , ',' ].
+			edgesString := edgesString , '{from: "',dependingCat key, '" ,to: "', cat key ,'" , value: ', relations size asString, ' }'.
+			]
+		].
+	nodesString := nodesString , ']);'.
+	edgesString := edgesString , ']);'.
+	self halt.
+]
+
 { #category : 'rendering' }
 CategoriesGraph >> layout: canvas [
 	"RSGraphvizLayout twoPi on: canvas nodes. "
@@ -454,6 +476,7 @@ CategoriesGraph >> runWithOnlyCategories [
 	"	usingCategories := categoriesRelationships flatCollectAsSet: #keys. 
 	providerCategories := categoriesRelationships keys reject: [:each | usingCategories includes: each].
 	clientCategories := (categoriesRelationships select:[:each | each isEmpty]) keys."
+	self exportForVisNetwork.
 	self open.
 	"(self canvas shapesFromModels: usingCategories )do: [:each | each children first border color: Color blue; width: 3].
 	(self canvas shapesFromModels: providerCategories )do: [:each | each children first border color: Color red; width: 3]."
